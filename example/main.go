@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/investing-bot/microservice"
+	"github.com/investing-bot/microservice/tools/web"
 )
 
 func main() {
@@ -18,5 +19,6 @@ func main() {
 		EnableBus:   true,
 	}
 	s := microservice.New(opts)
+	s.HttpRouter().GET("/example", web.NotImplemented)
 	s.Start()
 }

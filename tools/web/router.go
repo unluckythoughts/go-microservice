@@ -59,12 +59,6 @@ func (r *router) log(w http.ResponseWriter, req *http.Request, p httprouter.Para
 	r.l.Info(p.ByName("message"))
 }
 
-// NotImplemented to be developed function handler
-func (r *router) NotImplemented(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	msg := "not implemented yet"
-	sendResponse(newResponse(w, r.newRequest(req, nil)), nil, errors.New(msg), 400)
-}
-
 func newRouter(l *zap.Logger, socketPath string) *router {
 	r := &router{
 		_int: httprouter.New(),
@@ -127,20 +121,16 @@ func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 
 	return httprouter.Handle(func(w http.ResponseWriter, httpReq *http.Request, p httprouter.Params) {
 		req := r.newRequest(httpReq, p)
+		resp := &response{request: req, respWriter: w}
 
 		baseLogger := req.Logger()
 		for _, middleware := range append(r.middlewares, middlewares...) {
 			l := baseLogger.With(zap.String("middleware", GetFuncName(middleware)))
 			req.SetLogger(l)
 			if err := middleware(req); err != nil {
-				sendResponse(&response{request: req, respWriter: w}, nil, err, 500)
+				sendResponse(resp, nil, err, 500)
 				return
 			}
-		}
-
-		resp := &response{
-			request:    req,
-			respWriter: w,
 		}
 
 		l := baseLogger.With(zap.String("handler", GetFuncName(handler)))
