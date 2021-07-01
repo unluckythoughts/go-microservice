@@ -10,6 +10,13 @@ func main() {
 	os.Setenv("DB_USER", "example")
 	os.Setenv("DB_PASSWORD", "example")
 	os.Setenv("DB_NAME", "example")
-	s := microservice.New("example")
+
+	opts := microservice.Options{
+		Name:        "example",
+		EnableDB:    true,
+		EnableCache: true,
+		EnableBus:   true,
+	}
+	s := microservice.New(opts)
 	s.Start()
 }

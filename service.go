@@ -24,6 +24,13 @@ type (
 		GetBus() bus.IBus
 	}
 
+	Options struct {
+		Name        string `env:"SERVICE_NAME" envDefault:"true"`
+		EnableDB    bool   `env:"SERVICE_ENABLE_DB" envDefault:"true"`
+		EnableCache bool   `env:"SERVICE_ENABLE_CACHE" envDefault:"false"`
+		EnableBus   bool   `env:"SERVICE_ENABLE_BUS" envDefault:"false"`
+	}
+
 	service struct {
 		db     *gorm.DB
 		cache  *redis.Client
@@ -76,15 +83,26 @@ func getBus(l *zap.Logger) bus.IBus {
 	return bus.New(opts)
 }
 
-func New(name string) IService {
+func New(opts Options) IService {
 	l := getLogger()
-	l.Named(name).Info("Starting " + name + " serice")
-	s := getServer(l.Named(name))
-	db := getDB(l.Named(name + ":db"))
-	c := getCache(l.Named(name + ":cache"))
-	b := getBus(l.Named(name + ":queue"))
+	l.Named(opts.Name).Info("Starting " + opts.Name + " serice")
+	s := &service{server: getServer(l.Named(opts.Name))}
+	if opts.EnableDB {
+		db := getDB(l.Named(opts.Name + ":db"))
+		s.db = db
+	}
 
-	return &service{server: s, db: db, cache: c, bus: b}
+	if opts.EnableBus {
+		b := getBus(l.Named(opts.Name + ":queue"))
+		s.bus = b
+	}
+
+	if opts.EnableCache {
+		c := getCache(l.Named(opts.Name + ":cache"))
+		s.cache = c
+	}
+
+	return s
 }
 
 func (s *service) Start() {
@@ -100,13 +118,25 @@ func (s *service) SocketRegister(method string, handler sockets.Handler) {
 }
 
 func (s *service) GetDB() *gorm.DB {
-	return s.db
+	if s.db != nil {
+		return s.db
+	}
+
+	panic("database is not configured with the service")
 }
 
 func (s *service) GetCache() *redis.Client {
-	return s.cache
+	if s.cache != nil {
+		return s.cache
+	}
+
+	panic("database is not configured with the service")
 }
 
 func (s *service) GetBus() bus.IBus {
-	return s.bus
+	if s.bus != nil {
+		return s.bus
+	}
+
+	panic("database is not configured with the service")
 }
