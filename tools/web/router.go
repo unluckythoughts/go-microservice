@@ -105,7 +105,7 @@ func (r *router) getMiddlewares(fns []interface{}) (middlewares []Middleware, ok
 	for _, fn := range fns {
 		middleware, ok := fn.(func(MiddlewareRequest) error)
 		if !ok {
-			r.l.Error("middleware should be of type func(shs.MiddlewareRequest) error")
+			r.l.Error("middleware should be of type web.Middleware")
 			return middlewares, false
 		}
 		middlewares = append(middlewares, Middleware(middleware))
@@ -117,12 +117,12 @@ func (r *router) getMiddlewares(fns []interface{}) (middlewares []Middleware, ok
 func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 	handler, ok := r.getHandler(handlers[len(handlers)-1:][0])
 	if !ok {
-		panic(fmt.Sprintf("last value of handlers has to be of type - shs.Handler"))
+		panic(fmt.Sprintf("last value of handlers has to be of type - web.Handler"))
 	}
 
 	middlewares, ok := r.getMiddlewares(handlers[:len(handlers)-1])
 	if !ok {
-		panic(fmt.Sprintf("all non-last values of handlers have to be of type - shs.Middleware"))
+		panic(fmt.Sprintf("all non-last values of handlers have to be of type - web.Middleware"))
 	}
 
 	return httprouter.Handle(func(w http.ResponseWriter, httpReq *http.Request, p httprouter.Params) {
