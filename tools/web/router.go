@@ -13,7 +13,7 @@ import (
 
 type (
 	// Handler function for the router
-	Handler    func(Request, Response) (interface{}, error)
+	Handler    func(Request) (interface{}, error)
 	Middleware func(MiddlewareRequest) error
 
 	router struct {
@@ -89,9 +89,9 @@ func GetFuncName(f interface{}) string {
 }
 
 func (r *router) getHandler(f interface{}) (Handler, bool) {
-	fn, ok := f.(func(Request, Response) (interface{}, error))
+	fn, ok := f.(func(Request) (interface{}, error))
 	if !ok {
-		r.l.Error("handler should be of type func(web.Request, web.Response) (interface{}, error)")
+		r.l.Error("handler should be of type func(web.Request) (interface{}, error)")
 		return nil, ok
 	}
 	return Handler(fn), ok
@@ -145,7 +145,7 @@ func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 
 		l := baseLogger.With(zap.String("handler", GetFuncName(handler)))
 		req.SetLogger(l)
-		data, err := handler(req, resp)
+		data, err := handler(req)
 		if err != nil {
 			sendResponse(resp, nil, err, 500)
 			return
