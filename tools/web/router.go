@@ -59,8 +59,8 @@ func (r *router) log(w http.ResponseWriter, req *http.Request, p httprouter.Para
 	r.l.Info(p.ByName("message"))
 }
 
-// notImplemented to be developed function handler
-func (r *router) notImplemented(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+// NotImplemented to be developed function handler
+func (r *router) NotImplemented(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	msg := "not implemented yet"
 	sendResponse(newResponse(w, r.newRequest(req, nil)), nil, errors.New(msg), 400)
 }
