@@ -10,6 +10,12 @@ import (
 )
 
 type Client interface {
+	Send(method, url string, body []byte, resp interface{}, reqHeaders ...http.Header) (status int, err error)
+	GetResponse(url string, resp interface{}, reqHeaders ...http.Header) (status int, err error)
+	PostResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error)
+	PutResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error)
+	PatchResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error)
+	DeleteResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error)
 }
 
 type client struct {
@@ -21,7 +27,7 @@ var (
 	emptyBody = []byte{}
 )
 
-func New(url string, json bool) Client {
+func NewClient(url string, json bool) Client {
 	return &client{
 		baseURL:    url,
 		httpClient: &http.Client{},
