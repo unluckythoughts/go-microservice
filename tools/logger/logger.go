@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -15,22 +17,44 @@ var (
 	defaultLoggerConfig = zap.Config{
 		Level:       zap.NewAtomicLevelAt(zapcore.InfoLevel),
 		Encoding:    "json",
+		Development: false,
 		OutputPaths: []string{"stdout"},
 		EncoderConfig: zapcore.EncoderConfig{
 			MessageKey:     "m",
 			LevelKey:       "l",
 			TimeKey:        "ts",
 			CallerKey:      "c",
-			StacktraceKey:  "trace",
-			FunctionKey:    "fn",
-			NameKey:        "s",
+			StacktraceKey:  "tr",
+			FunctionKey:    zapcore.OmitKey,
+			NameKey:        "n",
 			EncodeTime:     zapcore.ISO8601TimeEncoder,
-			EncodeLevel:    zapcore.LowercaseLevelEncoder,
+			EncodeLevel:    customLevelEncoder,
 			EncodeDuration: zapcore.StringDurationEncoder,
 			EncodeCaller:   zapcore.ShortCallerEncoder,
 		},
 	}
 )
+
+func customLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	switch l {
+	case zapcore.DebugLevel:
+		enc.AppendString("D")
+	case zapcore.InfoLevel:
+		enc.AppendString("I")
+	case zapcore.WarnLevel:
+		enc.AppendString("W")
+	case zapcore.ErrorLevel:
+		enc.AppendString("E")
+	case zapcore.DPanicLevel:
+		enc.AppendString("C")
+	case zapcore.PanicLevel:
+		enc.AppendString("P")
+	case zapcore.FatalLevel:
+		enc.AppendString("F")
+	default:
+		enc.AppendString(fmt.Sprintf("Level(%d)", l))
+	}
+}
 
 func New(opts Options) *zap.Logger {
 	defaultLoggerConfig.Level = getLogLevel(opts.LogLevel)

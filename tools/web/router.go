@@ -77,8 +77,8 @@ func (r *router) attachBasicHandlers() {
 	r._int.GET("/_log/:message", r.log)
 }
 
-// GetFuncName returns the name of the function
-func GetFuncName(f interface{}) string {
+// getFuncName returns the name of the function
+func getFuncName(f interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
 
@@ -123,18 +123,16 @@ func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 		req := r.newRequest(httpReq, p)
 		resp := &response{request: req, respWriter: w}
 
-		baseLogger := req.Logger()
+		baseLogger := req.ctx.l
 		for _, middleware := range append(r.middlewares, middlewares...) {
-			l := baseLogger.With(zap.String("middleware", GetFuncName(middleware)))
-			req.SetLogger(l)
+			req.ctx.l = baseLogger.With(zap.String("fn", getFuncName(middleware)))
 			if err := middleware(req); err != nil {
 				sendResponse(resp, nil, err, 500)
 				return
 			}
 		}
 
-		l := baseLogger.With(zap.String("handler", GetFuncName(handler)))
-		req.SetLogger(l)
+		req.ctx.l = baseLogger
 		data, err := handler(req)
 		if err != nil {
 			sendResponse(resp, nil, err, 500)

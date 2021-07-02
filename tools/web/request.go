@@ -1,16 +1,19 @@
 package web
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gofrs/uuid"
 	"github.com/julienschmidt/httprouter"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type reqBody struct {
@@ -21,27 +24,46 @@ type reqBody struct {
 // request struct of the request sent to the shs handlers
 type request struct {
 	_int        *http.Request
-	id          string
 	routeParams *httprouter.Params
-	log         *zap.Logger
-	startTime   time.Time
+	id          string
 	body        reqBody
-	context     map[string]interface{}
-	config      interface{}
+	ctx         *ctx
 }
 
 func (r *router) newRequest(req *http.Request, p httprouter.Params) *request {
 	reqID := uuid.Must(uuid.NewV4()).String()
-	reqLogger := r.l.With(zap.String("reqId", reqID))
+	l := r.l.With(zap.String("id", reqID))
 
 	return &request{
 		_int:        req,
-		id:          reqID,
 		routeParams: &p,
-		log:         reqLogger,
-		startTime:   time.Now(),
+		id:          reqID,
 		body:        reqBody{},
+		ctx:         newContext(l),
 	}
+}
+
+func (r *request) timeElapsed() (string, float64) {
+	d := time.Since(r.ctx.st)
+	floatD := float64(d.Nanoseconds()) / math.Pow10(6)
+	return d.String(), floatD
+}
+
+func (r *request) addLoggingFields(fields ...zapcore.Field) {
+	r.ctx.l = r.ctx.l.With(fields...)
+}
+
+func (r *request) SetContextValue(key string, val interface{}) error {
+	if r.ctx.Value(key) != nil {
+		return errors.New("key already exists in context")
+	}
+
+	r.ctx.Context = context.WithValue(r.ctx, key, val)
+	return nil
+}
+
+func (r *request) GetContext() Context {
+	return r.ctx
 }
 
 // GetValidatedBody validates the body and updates the ptr reference, errors if any issues
@@ -86,34 +108,4 @@ func (r *request) GetURLParam(key string) string {
 // GetRouteParam returns the route param value with the given key
 func (r *request) GetRouteParam(key string) string {
 	return r.routeParams.ByName(key)
-}
-
-// GetContext returns the request context
-func (r *request) GetContext() map[string]interface{} {
-	return r.context
-}
-
-// GetContextValue returns the value for the given key in its context
-func (r *request) GetContextValue(key string) interface{} {
-	return r.context[key]
-}
-
-// SetContextValue sets the value for the given key in its context, errors if the key already exists
-func (r *request) SetContextValue(key string, value interface{}) error {
-	if _, ok := r.context[key]; ok {
-		return errors.New("key already exists in context")
-	}
-
-	r.context[key] = value
-	return nil
-}
-
-// Log returns the logger interface for this request
-func (r *request) Logger() *zap.Logger {
-	return r.log
-}
-
-// Log returns the logger interface for this request
-func (r *request) SetLogger(l *zap.Logger) {
-	r.log = l
 }

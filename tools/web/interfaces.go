@@ -2,8 +2,6 @@ package web
 
 import (
 	"net/http"
-
-	"go.uber.org/zap"
 )
 
 // Router interface implementing general router
@@ -23,10 +21,7 @@ type Request interface {
 	GetHeader(key string) string
 	GetURLParam(key string) string
 	GetRouteParam(key string) string
-	GetContextValue(key string) interface{}
-	GetContext() map[string]interface{}
-	Logger() *zap.Logger
-	SetLogger(l *zap.Logger)
+	GetContext() Context
 }
 
 // MiddlewareRequest interface implementing general middleware request
