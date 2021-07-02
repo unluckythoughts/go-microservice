@@ -24,6 +24,7 @@ type (
 		GetCache() *redis.Client
 		GetBus() bus.IBus
 		GetAlerts() (*alerts.SlackClient, *alerts.TextClient)
+		GetLogger() *zap.Logger
 	}
 
 	Options struct {
@@ -34,6 +35,7 @@ type (
 	}
 
 	service struct {
+		l      *zap.Logger
 		db     *gorm.DB
 		cache  *redis.Client
 		server *web.Server
@@ -90,7 +92,7 @@ func getBus(l *zap.Logger) bus.IBus {
 func New(opts Options) IService {
 	l := getLogger()
 	l.Named(opts.Name).Info("Starting " + opts.Name + " serice")
-	s := &service{server: getServer(l.Named(opts.Name))}
+	s := &service{l: l, server: getServer(l.Named(opts.Name))}
 
 	s.slack = alerts.NewSlackClient(l.Named(opts.Name + ":slack"))
 	s.text = alerts.NewTextClient(l.Named(opts.Name + ":text"))
@@ -151,4 +153,7 @@ func (s *service) GetBus() bus.IBus {
 
 func (s *service) GetAlerts() (*alerts.SlackClient, *alerts.TextClient) {
 	return s.slack, s.text
+}
+func (s *service) GetLogger() *zap.Logger {
+	return s.l
 }
