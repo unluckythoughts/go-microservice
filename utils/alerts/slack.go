@@ -24,12 +24,12 @@ func NewSlackClient(l *zap.Logger) *SlackClient {
 	}
 }
 
-func (c *SlackClient) sendMessageToChannel(message, url string) {
+func (c *SlackClient) SendMessage(message, channelURL string) {
 	body := struct {
 		Text string `json:"text"`
 	}{Text: message}
 
-	status, err := c.webClient.PostResponse(url, body, nil)
+	status, err := c.webClient.PostResponse(channelURL, body, nil)
 	if err != nil {
 		c.l.Errorf("Error posting message %s to slack, error: %s", message, err.Error())
 	} else if status != http.StatusOK {
