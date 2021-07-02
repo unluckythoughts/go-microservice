@@ -21,17 +21,24 @@ type Client interface {
 type client struct {
 	baseURL    string
 	httpClient *http.Client
+	headers    http.Header
 }
 
 var (
 	emptyBody = []byte{}
 )
 
-func NewClient(url string) Client {
-	return &client{
+func NewClient(url string, defaultHeaders ...http.Header) Client {
+	c := &client{
 		baseURL:    url,
 		httpClient: &http.Client{},
 	}
+
+	if len(defaultHeaders) > 0 {
+		c.headers = defaultHeaders[0]
+	}
+
+	return c
 }
 
 func (c *client) Send(
@@ -50,10 +57,13 @@ func (c *client) Send(
 		return 0, errors.Wrap(err, "could not create http request")
 	}
 
-	if len(reqHeaders) > 0 {
-		for key, values := range reqHeaders[0] {
-			for _, value := range values {
-				req.Header.Add(key, value)
+	headers := append(reqHeaders, c.headers)
+	for _, header := range headers {
+		if header != nil {
+			for key, values := range reqHeaders[0] {
+				for _, value := range values {
+					req.Header.Add(key, value)
+				}
 			}
 		}
 	}
