@@ -27,7 +27,7 @@ var (
 	emptyBody = []byte{}
 )
 
-func NewClient(url string, json bool) Client {
+func NewClient(url string) Client {
 	return &client{
 		baseURL:    url,
 		httpClient: &http.Client{},
