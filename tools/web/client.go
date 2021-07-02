@@ -44,6 +44,7 @@ func (c *client) Send(
 		return 0, errors.Wrap(err, "could not parse the request body")
 	}
 
+	url = c.baseURL + url
 	req, err := http.NewRequest(method, url, reqBody)
 	if err != nil {
 		return 0, errors.Wrap(err, "could not create http request")
