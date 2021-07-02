@@ -9,6 +9,7 @@ import (
 	"github.com/investing-bot/microservice/tools/psql"
 	"github.com/investing-bot/microservice/tools/sockets"
 	"github.com/investing-bot/microservice/tools/web"
+	"github.com/investing-bot/microservice/utils/alerts"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -22,6 +23,7 @@ type (
 		GetDB() *gorm.DB
 		GetCache() *redis.Client
 		GetBus() bus.IBus
+		GetAlerts() (*alerts.SlackClient, *alerts.TextClient)
 	}
 
 	Options struct {
@@ -36,6 +38,8 @@ type (
 		cache  *redis.Client
 		server *web.Server
 		bus    bus.IBus
+		slack  *alerts.SlackClient
+		text   *alerts.TextClient
 	}
 )
 
@@ -87,6 +91,10 @@ func New(opts Options) IService {
 	l := getLogger()
 	l.Named(opts.Name).Info("Starting " + opts.Name + " serice")
 	s := &service{server: getServer(l.Named(opts.Name))}
+
+	s.slack = alerts.NewSlackClient(l.Named(opts.Name + ":slack"))
+	s.text = alerts.NewTextClient(l.Named(opts.Name + ":text"))
+
 	if opts.EnableDB {
 		db := getDB(l.Named(opts.Name + ":db"))
 		s.db = db
@@ -139,4 +147,8 @@ func (s *service) GetBus() bus.IBus {
 	}
 
 	panic("database is not configured with the service")
+}
+
+func (s *service) GetAlerts() (*alerts.SlackClient, *alerts.TextClient) {
+	return s.slack, s.text
 }
