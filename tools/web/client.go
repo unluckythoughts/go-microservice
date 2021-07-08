@@ -60,7 +60,7 @@ func (c *client) Send(
 	headers := append(reqHeaders, c.headers)
 	for _, header := range headers {
 		if header != nil {
-			for key, values := range reqHeaders[0] {
+			for key, values := range header {
 				for _, value := range values {
 					req.Header.Add(key, value)
 				}
