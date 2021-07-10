@@ -51,7 +51,10 @@ func (s *Server) delConn(conn net.Conn) {
 	s.connMutex.Lock()
 
 	delete(s.connections, conn.RemoteAddr().String())
-	conn.Close()
+	err := conn.Close()
+	if err != nil {
+		s.l.Debug("error while closing connection", zap.String("conn", conn.RemoteAddr().String()))
+	}
 }
 
 func (s *Server) closeSocket(conn net.Conn, msg string) {

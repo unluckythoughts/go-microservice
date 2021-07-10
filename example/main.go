@@ -9,7 +9,7 @@ import (
 
 func exampleMiddleware(r web.MiddlewareRequest) error {
 	r.GetContext().Logger().Info("test log from middleware")
-	r.SetContextValue("example-key", "example-value")
+	_ = r.SetContextValue("example-key", "example-value")
 	return nil
 }
 
@@ -22,9 +22,9 @@ func exampleHandler(r web.Request) (interface{}, error) {
 }
 
 func main() {
-	os.Setenv("DB_USER", "example")
-	os.Setenv("DB_PASSWORD", "example")
-	os.Setenv("DB_NAME", "example")
+	_ = os.Setenv("DB_USER", "example")
+	_ = os.Setenv("DB_PASSWORD", "example")
+	_ = os.Setenv("DB_NAME", "example")
 
 	opts := microservice.Options{
 		Name:        "example",

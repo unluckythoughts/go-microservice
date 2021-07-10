@@ -33,6 +33,11 @@ func NotImplemented(req Request) (interface{}, error) {
 	return nil, NewError(http.StatusMethodNotAllowed, errors.New("not implemented"))
 }
 
+// UnAuthorizedHandler 401 http handler function
+func UnAuthorized(req Request) (interface{}, error) {
+	return nil, NewError(http.StatusUnauthorized, errors.New("not authorized"))
+}
+
 // AddHeader adds the headers for response
 func (r *response) AddHeader(key string, values ...string) {
 	if len(values) == 0 {
@@ -101,7 +106,7 @@ func sendResponse(resp *response, data interface{}, respErr error, statusCode in
 		base.Ok = false
 		base.Error = "error while parsing response body"
 		base.Data = nil
-		json.NewEncoder(body).Encode(base)
+		_ = json.NewEncoder(body).Encode(base)
 	}
 
 	fmt.Fprint(resp.respWriter, body)

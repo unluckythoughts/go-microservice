@@ -3,6 +3,13 @@ PRIVATE_REPOS = github.com/investing-bot
 SHELL = /bin/bash
 
 EXAMPLE_DOCKER_COMPOSE_FILE=example/docker-compose.yml
+CI_RUNNER_REPO = ib-ci-runner-repo
+DOCKERS_DIR = $(PWD)/dockers
+
+export AWS_PROFILE	= ib-terraform
+AWS_REGION = us-east-1
+REGISTRY = 654934037597.dkr.ecr.$(AWS_REGION).amazonaws.com
+
 
 check-db-ready:
 	@echo -n "Waiting for db     ...  "
@@ -26,7 +33,11 @@ check-stack-ready:
 		sleep 1; \
 	done; \
 
-setup:
+init:
+	@rm -rf vendor
+	go mod vendor -v
+
+setup-example:
 	@docker-compose -f ${EXAMPLE_DOCKER_COMPOSE_FILE} kill 2>&1 1>/dev/null
 	docker-compose -f ${EXAMPLE_DOCKER_COMPOSE_FILE} rm -fsv 2>&1 1>/dev/null
 	docker-compose -f ${EXAMPLE_DOCKER_COMPOSE_FILE} up -d
@@ -41,3 +52,42 @@ run-example:
 check-dependencies: check-db-ready check-stack-ready
 
 start-example: setup check-dependencies run-example
+
+
+############################# CI Targets #############################
+CI_RUNNER = docker run -i --rm \
+	--net host \
+	-v /var/run/docker.sock:/var/run/docker.sock \
+	-v "${PWD}:/go/code" \
+	-v "${HOME}/.aws:/root/.aws" \
+	-v "${PWD}/github_key:/root/.ssh/id_rsa" \
+	-v "${PWD}/known_hosts:/root/.ssh/known_hosts" \
+	-e "GOPRIVATE=${GOPRIVATE}" \
+	-e "GIT_USER=${GIT_USER}" \
+	-e "GIT_TOKEN=${GIT_TOKEN}" \
+	-w /go/code \
+	${ECR_REGISTRY}/$(CI_RUNNER_REPO):latest $(1)
+
+.PHONY: ci
+ci:
+	@$(call CI_RUNNER,${step})
+
+setup-git:
+	git config --global url."https://$${GIT_USER}:$${GIT_TOKEN}@github.com".insteadOf "https://github.com"
+
+setup: setup-git init
+
+lint:
+	golangci-lint run
+
+docker-build-ci-runner:
+	docker build -t "${CI_RUNNER_REPO}:latest" -f ${DOCKERS_DIR}/ci-runner.Dockerfile .
+
+docker-build: docker-build-ci-runner
+
+docker-push-ci-runner: docker-build-ci-runner
+	aws ecr --region ${AWS_REGION} get-login-password | docker login -u AWS --password-stdin ${REGISTRY}
+	docker tag "${CI_RUNNER_REPO}:latest" "${REGISTRY}/${CI_RUNNER_REPO}:latest"
+	docker push "${REGISTRY}/${CI_RUNNER_REPO}:latest"
+
+docker-push: docker-push-ci-runner

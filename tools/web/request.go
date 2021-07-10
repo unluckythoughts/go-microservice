@@ -49,7 +49,7 @@ func (r *request) timeElapsed() (string, float64) {
 	return d.String(), floatD
 }
 
-func (r *request) addLoggingFields(fields ...zapcore.Field) {
+func (r *request) With(fields ...zapcore.Field) {
 	r.ctx.l = r.ctx.l.With(fields...)
 }
 
@@ -58,6 +58,7 @@ func (r *request) SetContextValue(key string, val interface{}) error {
 		return errors.New("key already exists in context")
 	}
 
+	// nolint:staticcheck
 	r.ctx.Context = context.WithValue(r.ctx, key, val)
 	return nil
 }

@@ -31,7 +31,7 @@ func NewServer(opts Options) *Server {
 	s := &Server{
 		addr:         ":" + strconv.Itoa(opts.Port),
 		logger:       opts.Logger,
-		router:       newRouter(opts.Logger, opts.SocketPath),
+		router:       newRouter(opts.Logger),
 		socketServer: socketServer,
 	}
 

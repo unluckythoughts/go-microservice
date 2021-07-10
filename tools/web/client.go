@@ -52,6 +52,7 @@ func (c *client) Send(
 	}
 
 	url = c.baseURL + url
+	// nolint:noctx
 	req, err := http.NewRequest(method, url, reqBody)
 	if err != nil {
 		return 0, errors.Wrap(err, "could not create http request")
@@ -59,11 +60,9 @@ func (c *client) Send(
 
 	headers := append(reqHeaders, c.headers)
 	for _, header := range headers {
-		if header != nil {
-			for key, values := range header {
-				for _, value := range values {
-					req.Header.Add(key, value)
-				}
+		for key, values := range header {
+			for _, value := range values {
+				req.Header.Add(key, value)
 			}
 		}
 	}
@@ -74,6 +73,7 @@ func (c *client) Send(
 	}
 
 	if resp != nil {
+		defer func() { _ = httpResp.Body.Close() }()
 		data, err := ioutil.ReadAll(httpResp.Body)
 		if err != nil {
 			return 0, errors.Wrap(err, "could not read response body")

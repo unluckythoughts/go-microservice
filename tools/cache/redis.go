@@ -46,6 +46,7 @@ func New(opts Options) *redis.Client {
 
 	if !opts.DisableSSL {
 		config.TLSConfig = &tls.Config{
+			// nolint:gosec
 			InsecureSkipVerify: true,
 		}
 	}

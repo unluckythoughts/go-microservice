@@ -35,12 +35,6 @@ func (r *router) methodNotAllowedHandler(w http.ResponseWriter, req *http.Reques
 	sendResponse(newResponse(w, r.newRequest(req, nil)), nil, errors.New(msg), 405)
 }
 
-// unAuthorizedHandler 401 http handler function
-func (r *router) unAuthorizedHandler(w http.ResponseWriter, req *http.Request) {
-	msg := "not authorized"
-	sendResponse(newResponse(w, r.newRequest(req, nil)), nil, errors.New(msg), 401)
-}
-
 // panicHandler panic http handler function
 func (r *router) panicHandler(w http.ResponseWriter, req *http.Request, err interface{}) {
 	panicErr := errors.New(err.(error).Error())
@@ -59,7 +53,7 @@ func (r *router) log(w http.ResponseWriter, req *http.Request, p httprouter.Para
 	r.l.Info(p.ByName("message"))
 }
 
-func newRouter(l *zap.Logger, socketPath string) *router {
+func newRouter(l *zap.Logger) *router {
 	r := &router{
 		_int: httprouter.New(),
 		l:    l,
@@ -111,12 +105,12 @@ func (r *router) getMiddlewares(fns []interface{}) (middlewares []Middleware, ok
 func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 	handler, ok := r.getHandler(handlers[len(handlers)-1:][0])
 	if !ok {
-		panic(fmt.Sprintf("last value of handlers has to be of type - web.Handler"))
+		panic(fmt.Errorf("last value of handlers has to be of type - web.Handler"))
 	}
 
 	middlewares, ok := r.getMiddlewares(handlers[:len(handlers)-1])
 	if !ok {
-		panic(fmt.Sprintf("all non-last values of handlers have to be of type - web.Middleware"))
+		panic(fmt.Errorf("all non-last values of handlers have to be of type - web.Middleware"))
 	}
 
 	return httprouter.Handle(func(w http.ResponseWriter, httpReq *http.Request, p httprouter.Params) {

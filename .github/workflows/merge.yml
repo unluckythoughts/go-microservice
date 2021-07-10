@@ -1,0 +1,48 @@
+name: PR Checks
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ib-ci
+          role-duration-seconds: 1200
+          role-session-name: githubPRChecks
+          role-skip-session-tagging: true
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Bump version and push tag
+        id: tag_version
+        if: ${{ github.event_name == 'push' }}
+        uses: mathieudutour/github-tag-action@v5.5
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_release_rules: fix:patch,hotfix:patch,chore:patch,docs:patch,feat:minor,perf:major,refactor:major
+
+      - name: Build images
+        run: make docker-build
+
+      - name: Push images to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.tag_version.outputs.new_tag }}
+        run: make docker-push imageTag=${IMAGE_TAG}
