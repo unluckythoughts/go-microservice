@@ -15,20 +15,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Login to Docker hub
+        id: login-docker
+        uses: docker/login-action@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET }}
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ib-ci
-          role-duration-seconds: 1200
-          role-session-name: githubPRChecks
-          role-skip-session-tagging: true
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Bump version and push tag
         id: tag_version
@@ -40,8 +32,7 @@ jobs:
       - name: Build images
         run: make docker-build
 
-      - name: Push images to Amazon ECR
+      - name: Push images to docker hub
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.tag_version.outputs.new_tag }}
         run: make docker-push imageTag=${IMAGE_TAG}

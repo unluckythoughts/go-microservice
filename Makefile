@@ -6,8 +6,7 @@ EXAMPLE_DOCKER_COMPOSE_FILE=example/docker-compose.yml
 CI_RUNNER_REPO = ci-runner-repo
 DOCKERS_DIR = $(PWD)/dockers
 
-# TODO registry path
-REGISTRY =
+DOCKERHUB_REGISTRY = unluckythoughts
 
 
 check-db-ready:
@@ -65,7 +64,7 @@ CI_RUNNER = docker run -i --rm \
 	-e "GIT_USER=${GIT_USER}" \
 	-e "GIT_TOKEN=${GIT_TOKEN}" \
 	-w /go/code \
-	${ECR_REGISTRY}/$(CI_RUNNER_REPO):latest $(1)
+	${DOCKERHUB_REGISTRY}/$(CI_RUNNER_REPO):latest $(1)
 
 .PHONY: ci
 ci:
@@ -85,8 +84,7 @@ docker-build-ci-runner:
 docker-build: docker-build-ci-runner
 
 docker-push-ci-runner: docker-build-ci-runner
-	aws ecr --region ${AWS_REGION} get-login-password | docker login -u AWS --password-stdin ${REGISTRY}
-	docker tag "${CI_RUNNER_REPO}:latest" "${REGISTRY}/${CI_RUNNER_REPO}:latest"
-	docker push "${REGISTRY}/${CI_RUNNER_REPO}:latest"
+	docker tag "${CI_RUNNER_REPO}:latest" "${DOCKERHUB_REGISTRY}/${CI_RUNNER_REPO}:latest"
+	docker push "${DOCKERHUB_REGISTRY}/${CI_RUNNER_REPO}:latest"
 
 docker-push: docker-push-ci-runner
