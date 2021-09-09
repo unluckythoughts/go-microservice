@@ -1,4 +1,5 @@
 FROM vektra/mockery:v2.8.0 as mockery
+FROM bitnami/kubectl:latest as kube
 
 FROM golang:1.15
 RUN apt-get update
@@ -14,6 +15,7 @@ RUN curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-c
 RUN chmod +x /usr/local/bin/docker-compose
 
 COPY --from=mockery /usr/local/bin/mockery /usr/local/bin/mockery
+COPY --from=kube /opt/bitnami/kubectl/bin/kubectl /usr/local/bin/kubectl
 
 # Forcing go mod and ignore GOPATH
 ENV GO111MODULE=on
