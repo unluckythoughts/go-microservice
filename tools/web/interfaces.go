@@ -6,15 +6,15 @@ import (
 
 // Router interface implementing general router
 type Router interface {
-	// GET params: path, web.Handler, ...web.Middleware
+	// GET params: path, ...web.Middleware, web.Handler
 	GET(string, ...interface{})
-	// POST params: path, web.Handler, ...web.Middleware
+	// POST params: path, ...web.Middleware, web.Handler
 	POST(string, ...interface{})
-	// PUT params: path, web.Handler, ...web.Middleware
+	// PUT params: path, ...web.Middleware, web.Handler
 	PUT(string, ...interface{})
-	// PATCH params: path, web.Handler, ...web.Middleware
+	// PATCH params: path, ...web.Middleware, web.Handler
 	PATCH(string, ...interface{})
-	// DELETE params: path, web.Handler, ...web.Middleware
+	// DELETE params: path, ...web.Middleware, web.Handler
 	DELETE(string, ...interface{})
 	Use(...Middleware)
 }
