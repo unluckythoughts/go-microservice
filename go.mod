@@ -15,5 +15,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	go.uber.org/zap v1.18.1
 	gorm.io/driver/postgres v1.1.0
-	gorm.io/gorm v1.21.11
+	gorm.io/driver/sqlite v1.1.6
+	gorm.io/gorm v1.21.15
 )

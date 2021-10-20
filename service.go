@@ -9,6 +9,7 @@ import (
 	"github.com/unluckythoughts/go-microservice/tools/logger"
 	"github.com/unluckythoughts/go-microservice/tools/psql"
 	"github.com/unluckythoughts/go-microservice/tools/sockets"
+	"github.com/unluckythoughts/go-microservice/tools/sqlite"
 	"github.com/unluckythoughts/go-microservice/tools/web"
 	"github.com/unluckythoughts/go-microservice/utils/alerts"
 	"go.uber.org/zap"
@@ -30,6 +31,7 @@ type (
 	Options struct {
 		Name        string `env:"SERVICE_NAME" envDefault:"true"`
 		EnableDB    bool   `env:"SERVICE_ENABLE_DB" envDefault:"true"`
+		DBType      string `env:"SERVICE_DB_TYPE" envDefault:"postgresql"`
 		EnableCache bool   `env:"SERVICE_ENABLE_CACHE" envDefault:"false"`
 		EnableBus   bool   `env:"SERVICE_ENABLE_BUS" envDefault:"false"`
 	}
@@ -43,6 +45,11 @@ type (
 		slack  *alerts.SlackClient
 		text   *alerts.TextClient
 	}
+)
+
+const (
+	DBTypePostgresql = "postgresql"
+	DBTypeSqlite     = "sqlite"
 )
 
 func parseEnvironmentVars(config interface{}) {
@@ -65,12 +72,20 @@ func getServer(l *zap.Logger) *web.Server {
 	return web.NewServer(opts)
 }
 
-func getDB(l *zap.Logger) *gorm.DB {
+func getPsqlDB(l *zap.Logger) *gorm.DB {
 	opts := psql.Options{}
 	parseEnvironmentVars(&opts)
 	opts.Logger = l
 
 	return psql.New(opts)
+}
+
+func getSqliteDB(l *zap.Logger) *gorm.DB {
+	opts := sqlite.Options{}
+	parseEnvironmentVars(&opts)
+	opts.Logger = l
+
+	return sqlite.New(opts)
 }
 
 func getCache(l *zap.Logger) *redis.Client {
@@ -98,8 +113,13 @@ func New(opts Options) IService {
 	s.text = alerts.NewTextClient(l.Named(opts.Name + ":text"))
 
 	if opts.EnableDB {
-		db := getDB(l.Named(opts.Name + ":db"))
-		s.db = db
+		if opts.DBType == DBTypeSqlite {
+			db := getSqliteDB(l.Named(opts.Name + ":db"))
+			s.db = db
+		} else {
+			db := getPsqlDB(l.Named(opts.Name + ":db"))
+			s.db = db
+		}
 	}
 
 	if opts.EnableBus {
