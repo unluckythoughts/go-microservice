@@ -18,7 +18,7 @@ type ctx struct {
 	l  *zap.Logger
 }
 
-func newContext(l *zap.Logger) *ctx {
+func NewContext(l *zap.Logger) *ctx {
 	return &ctx{
 		st:      time.Now(),
 		l:       l,

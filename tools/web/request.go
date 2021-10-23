@@ -39,7 +39,7 @@ func (r *router) newRequest(req *http.Request, p httprouter.Params) *request {
 		routeParams: &p,
 		id:          reqID,
 		body:        reqBody{},
-		ctx:         newContext(l),
+		ctx:         NewContext(l),
 	}
 }
 
