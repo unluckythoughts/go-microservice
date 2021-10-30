@@ -1,9 +1,7 @@
 package microservice
 
 import (
-	"github.com/caarlos0/env"
 	"github.com/go-redis/redis/v8"
-	"github.com/pkg/errors"
 	"github.com/unluckythoughts/go-microservice/tools/bus"
 	"github.com/unluckythoughts/go-microservice/tools/cache"
 	"github.com/unluckythoughts/go-microservice/tools/logger"
@@ -11,6 +9,7 @@ import (
 	"github.com/unluckythoughts/go-microservice/tools/sockets"
 	"github.com/unluckythoughts/go-microservice/tools/sqlite"
 	"github.com/unluckythoughts/go-microservice/tools/web"
+	"github.com/unluckythoughts/go-microservice/utils"
 	"github.com/unluckythoughts/go-microservice/utils/alerts"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -52,21 +51,15 @@ const (
 	DBTypeSqlite     = "sqlite"
 )
 
-func parseEnvironmentVars(config interface{}) {
-	if err := env.Parse(config); err != nil {
-		panic(errors.Wrapf(err, "could not parse env variables"))
-	}
-}
-
 func getLogger() *zap.Logger {
 	opts := logger.Options{}
-	parseEnvironmentVars(&opts)
+	utils.ParseEnvironmentVars(&opts)
 	return logger.New(opts)
 }
 
 func getServer(l *zap.Logger) *web.Server {
 	opts := web.Options{}
-	parseEnvironmentVars(&opts)
+	utils.ParseEnvironmentVars(&opts)
 	opts.Logger = l
 
 	return web.NewServer(opts)
@@ -74,7 +67,7 @@ func getServer(l *zap.Logger) *web.Server {
 
 func getPsqlDB(l *zap.Logger) *gorm.DB {
 	opts := psql.Options{}
-	parseEnvironmentVars(&opts)
+	utils.ParseEnvironmentVars(&opts)
 	opts.Logger = l
 
 	return psql.New(opts)
@@ -82,7 +75,7 @@ func getPsqlDB(l *zap.Logger) *gorm.DB {
 
 func getSqliteDB(l *zap.Logger) *gorm.DB {
 	opts := sqlite.Options{}
-	parseEnvironmentVars(&opts)
+	utils.ParseEnvironmentVars(&opts)
 	opts.Logger = l
 
 	return sqlite.New(opts)
@@ -90,7 +83,7 @@ func getSqliteDB(l *zap.Logger) *gorm.DB {
 
 func getCache(l *zap.Logger) *redis.Client {
 	opts := cache.Options{}
-	parseEnvironmentVars(&opts)
+	utils.ParseEnvironmentVars(&opts)
 	opts.Logger = l
 
 	return cache.New(opts)
@@ -98,7 +91,7 @@ func getCache(l *zap.Logger) *redis.Client {
 
 func getBus(l *zap.Logger) bus.IBus {
 	opts := bus.Options{}
-	parseEnvironmentVars(&opts)
+	utils.ParseEnvironmentVars(&opts)
 	opts.Logger = l
 
 	return bus.New(opts)
