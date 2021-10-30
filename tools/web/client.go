@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"github.com/unluckythoughts/go-microservice/tools/web/proxy/socks5"
 )
 
 type Client interface {
@@ -28,9 +29,9 @@ var (
 	emptyBody = []byte{}
 )
 
-func NewClient(url string, defaultHeaders ...http.Header) Client {
+func NewClient(baseURL string, defaultHeaders ...http.Header) Client {
 	c := &client{
-		baseURL:    url,
+		baseURL:    baseURL,
 		httpClient: &http.Client{},
 	}
 
@@ -39,6 +40,24 @@ func NewClient(url string, defaultHeaders ...http.Header) Client {
 	}
 
 	return c
+}
+
+func NewSocks5ProxyClient(baseURL, proxyHost string, defaultHeaders ...http.Header) (Client, error) {
+	httpClient, err := socks5.NewProxyClient(proxyHost)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &client{
+		baseURL:    baseURL,
+		httpClient: httpClient,
+	}
+
+	if len(defaultHeaders) > 0 {
+		c.headers = defaultHeaders[0]
+	}
+
+	return c, nil
 }
 
 func (c *client) Send(

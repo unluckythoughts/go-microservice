@@ -17,4 +17,5 @@ require (
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/driver/sqlite v1.1.6
 	gorm.io/gorm v1.21.15
+	golang.org/x/net v0.0.0-20211029224645-99673261e6eb
 )
