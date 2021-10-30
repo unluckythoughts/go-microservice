@@ -11,7 +11,7 @@ import (
 )
 
 func NewProxyClient(proxyHost string) (*http.Client, error) {
-	if proxyHost != "" {
+	if proxyHost == "" {
 		return nil, errors.New("proxy host is mandatory")
 	}
 
