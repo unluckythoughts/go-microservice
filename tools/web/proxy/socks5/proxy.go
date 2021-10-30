@@ -10,10 +10,6 @@ import (
 	"golang.org/x/net/proxy"
 )
 
-const (
-	PROXY_HOST = "159.65.47.58:50001"
-)
-
 func NewProxyClient(proxyHost string) (*http.Client, error) {
 	if proxyHost != "" {
 		return nil, errors.New("proxy host is mandatory")
