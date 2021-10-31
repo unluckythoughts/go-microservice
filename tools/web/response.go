@@ -54,14 +54,20 @@ func logResponse(req *request, statusCode int, respBody *bytes.Buffer) {
 	method := req._int.Method
 	url := req._int.URL.String()
 
-	strDuration, duration := req.timeElapsed()
+	resp := ""
+	if respBody.Len() > 512 {
+		resp = string(respBody.Bytes()[:250]) + "..." + string(respBody.Bytes()[respBody.Len()-250:])
+	} else {
+		resp = respBody.String()
+	}
 
+	strDuration, duration := req.timeElapsed()
 	msg := fmt.Sprintf("%d %s %s %s", statusCode, strings.ToUpper(method), url, strDuration)
 	fields := []zap.Field{
 		zap.String("p", method+" "+url),
 		zap.Float64("t", duration),
 		zap.String("b", string(req.body.raw)),
-		zap.String("r", respBody.String()),
+		zap.String("r", resp),
 	}
 
 	urlParams := req._int.URL.Query()
