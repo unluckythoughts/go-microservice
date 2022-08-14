@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"time"
@@ -71,7 +71,7 @@ func (r *request) GetContext() Context {
 func (r *request) GetValidatedBody(ptr interface{}) (err error) {
 	data := r.body.raw
 	if !r.body.read {
-		if data, err = ioutil.ReadAll(r._int.Body); err != nil {
+		if data, err = io.ReadAll(r._int.Body); err != nil {
 			return err
 		}
 		r.body.read = true

@@ -14,7 +14,7 @@ import (
 type (
 	// Handler function for the router
 	Handler    func(Request) (interface{}, error)
-	Middleware func(MiddlewareRequest) error
+	Middleware func(MiddlewareRequest, Response) error
 
 	router struct {
 		_int        *httprouter.Router
@@ -91,7 +91,7 @@ func (r *router) getMiddlewares(fns []interface{}) (middlewares []Middleware, ok
 	}
 
 	for _, fn := range fns {
-		middleware, ok := fn.(func(MiddlewareRequest) error)
+		middleware, ok := fn.(func(MiddlewareRequest, Response) error)
 		if !ok {
 			r.l.Error("middleware should be of type web.Middleware")
 			return middlewares, false
@@ -120,7 +120,7 @@ func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 		baseLogger := req.ctx.l
 		for _, middleware := range append(r.middlewares, middlewares...) {
 			req.ctx.l = baseLogger.With(zap.String("fn", getFuncName(middleware)))
-			if err := middleware(req); err != nil {
+			if err := middleware(req, resp); err != nil {
 				sendResponse(resp, nil, err, 500)
 				return
 			}

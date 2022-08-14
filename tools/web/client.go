@@ -3,7 +3,7 @@ package web
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -112,7 +112,7 @@ func (c *client) Send(
 
 	if resp != nil {
 		defer func() { _ = httpResp.Body.Close() }()
-		data, err := ioutil.ReadAll(httpResp.Body)
+		data, err := io.ReadAll(httpResp.Body)
 		if err != nil {
 			return 0, errors.Wrap(err, "could not read response body")
 		}
