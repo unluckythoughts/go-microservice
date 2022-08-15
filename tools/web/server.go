@@ -22,7 +22,7 @@ type (
 		Port        int    `env:"WEB_PORT" envDefault:"8080"`
 		SocketPath  string `env:"WEB_SOCKET_PATH" envDefault:"/socket"`
 		WorkerCount int    `env:"WEB_WORKER_COUNT" envDefault:"20"`
-		EnableCORS  bool
+		EnableCORS  bool   `env:"WEB_CORS" envDefault:"false"`
 	}
 )
 

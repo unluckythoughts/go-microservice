@@ -25,6 +25,8 @@ func main() {
 	_ = os.Setenv("DB_USER", "example")
 	_ = os.Setenv("DB_PASSWORD", "example")
 	_ = os.Setenv("DB_NAME", "example")
+	_ = os.Setenv("WEB_PORT", "5679")
+	_ = os.Setenv("WEB_CORS", "true")
 
 	opts := microservice.Options{
 		Name:        "example",
