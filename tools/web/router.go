@@ -19,7 +19,6 @@ type (
 	router struct {
 		_int        *httprouter.Router
 		l           *zap.Logger
-		cors        bool
 		middlewares []Middleware
 	}
 )
@@ -58,7 +57,6 @@ func newRouter(l *zap.Logger, enableCors bool) *router {
 	r := &router{
 		_int: httprouter.New(),
 		l:    l,
-		cors: enableCors,
 	}
 
 	r.attachBasicHandlers(enableCors)
@@ -131,10 +129,6 @@ func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 	}
 
 	return httprouter.Handle(func(w http.ResponseWriter, httpReq *http.Request, p httprouter.Params) {
-		if r.cors {
-			setCORSHeaders(w)
-		}
-
 		req := r.newRequest(httpReq, p)
 		resp := &response{request: req, respWriter: w}
 
