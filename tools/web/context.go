@@ -29,7 +29,3 @@ func NewContext(l *zap.Logger) *ctx {
 func (c *ctx) Logger() *zap.SugaredLogger {
 	return c.l.Sugar()
 }
-
-func (c *ctx) GoContext() context.Context {
-	return c.Context
-}
