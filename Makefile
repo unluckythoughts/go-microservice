@@ -1,5 +1,4 @@
 .ONESHELL:
-PRIVATE_REPOS = github.com/investing-bot
 SHELL = /bin/bash
 
 EXAMPLE_DOCKER_COMPOSE_FILE=example/docker-compose.yml
