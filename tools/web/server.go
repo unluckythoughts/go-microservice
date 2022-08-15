@@ -22,6 +22,7 @@ type (
 		Port        int    `env:"WEB_PORT" envDefault:"8080"`
 		SocketPath  string `env:"WEB_SOCKET_PATH" envDefault:"/socket"`
 		WorkerCount int    `env:"WEB_WORKER_COUNT" envDefault:"20"`
+		EnableCORS  bool
 	}
 )
 
@@ -37,6 +38,11 @@ func NewServer(opts Options) *Server {
 
 	http.Handle("/", s.router._int)
 	http.Handle(opts.SocketPath, http.HandlerFunc(s.upgradeConnection))
+
+	if opts.EnableCORS {
+		s.router._int.GlobalOPTIONS = http.HandlerFunc(s.router.corsHandler)
+	}
+
 	return s
 }
 

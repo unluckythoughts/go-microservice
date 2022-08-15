@@ -14,7 +14,7 @@ import (
 type (
 	// Handler function for the router
 	Handler    func(Request) (interface{}, error)
-	Middleware func(MiddlewareRequest, Response) error
+	Middleware func(MiddlewareRequest) error
 
 	router struct {
 		_int        *httprouter.Router
@@ -63,6 +63,13 @@ func newRouter(l *zap.Logger) *router {
 	return r
 }
 
+// cors http handler function
+func (r *router) corsHandler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Access-Control-Expose-Headers", "Authorization")
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	sendResponse(newResponse(w, r.newRequest(req, nil)), nil, nil, 200)
+}
+
 func (r *router) attachBasicHandlers() {
 	r._int.NotFound = http.HandlerFunc(r.notFoundHandler)
 	r._int.MethodNotAllowed = http.HandlerFunc(r.methodNotAllowedHandler)
@@ -91,7 +98,7 @@ func (r *router) getMiddlewares(fns []interface{}) (middlewares []Middleware, ok
 	}
 
 	for _, fn := range fns {
-		middleware, ok := fn.(func(MiddlewareRequest, Response) error)
+		middleware, ok := fn.(func(MiddlewareRequest) error)
 		if !ok {
 			r.l.Error("middleware should be of type web.Middleware")
 			return middlewares, false
@@ -120,7 +127,7 @@ func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 		baseLogger := req.ctx.l
 		for _, middleware := range append(r.middlewares, middlewares...) {
 			req.ctx.l = baseLogger.With(zap.String("fn", getFuncName(middleware)))
-			if err := middleware(req, resp); err != nil {
+			if err := middleware(req); err != nil {
 				sendResponse(resp, nil, err, 500)
 				return
 			}
