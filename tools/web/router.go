@@ -19,6 +19,7 @@ type (
 	router struct {
 		_int        *httprouter.Router
 		l           *zap.Logger
+		cors        bool
 		middlewares []Middleware
 	}
 )
@@ -53,29 +54,37 @@ func (r *router) log(w http.ResponseWriter, req *http.Request, p httprouter.Para
 	r.l.Info(p.ByName("message"))
 }
 
-func newRouter(l *zap.Logger) *router {
+func newRouter(l *zap.Logger, enableCors bool) *router {
 	r := &router{
 		_int: httprouter.New(),
 		l:    l,
+		cors: enableCors,
 	}
 
-	r.attachBasicHandlers()
+	r.attachBasicHandlers(enableCors)
 	return r
+}
+
+func setCORSHeaders(w http.ResponseWriter) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
 }
 
 // cors http handler function
 func (r *router) corsHandler(w http.ResponseWriter, req *http.Request) {
-	w.Header().Add("Access-Control-Expose-Headers", "Authorization")
-	w.Header().Add("Access-Control-Allow-Origin", "*")
+	setCORSHeaders(w)
 	sendResponse(newResponse(w, r.newRequest(req, nil)), nil, nil, 200)
 }
 
-func (r *router) attachBasicHandlers() {
+func (r *router) attachBasicHandlers(enableCors bool) {
 	r._int.NotFound = http.HandlerFunc(r.notFoundHandler)
 	r._int.MethodNotAllowed = http.HandlerFunc(r.methodNotAllowedHandler)
 	r._int.PanicHandler = r.panicHandler
 	r._int.GET("/_status", r.healthcheckHandler)
 	r._int.GET("/_log/:message", r.log)
+
+	if enableCors {
+		r._int.GlobalOPTIONS = http.HandlerFunc(r.corsHandler)
+	}
 }
 
 // getFuncName returns the name of the function
@@ -121,6 +130,10 @@ func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 	}
 
 	return httprouter.Handle(func(w http.ResponseWriter, httpReq *http.Request, p httprouter.Params) {
+		if r.cors {
+			setCORSHeaders(w)
+		}
+
 		req := r.newRequest(httpReq, p)
 		resp := &response{request: req, respWriter: w}
 

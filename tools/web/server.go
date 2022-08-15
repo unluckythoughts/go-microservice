@@ -32,16 +32,11 @@ func NewServer(opts Options) *Server {
 	s := &Server{
 		addr:         ":" + strconv.Itoa(opts.Port),
 		logger:       opts.Logger,
-		router:       newRouter(opts.Logger),
+		router:       newRouter(opts.Logger, opts.EnableCORS),
 		socketServer: socketServer,
 	}
-
 	http.Handle("/", s.router._int)
 	http.Handle(opts.SocketPath, http.HandlerFunc(s.upgradeConnection))
-
-	if opts.EnableCORS {
-		s.router._int.GlobalOPTIONS = http.HandlerFunc(s.router.corsHandler)
-	}
 
 	return s
 }
