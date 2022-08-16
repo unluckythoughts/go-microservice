@@ -17,18 +17,19 @@ type (
 		logger         *zap.Logger
 		router         *router
 		socketServer   *sockets.Server
-		proxyTransport func(l *zap.Logger) http.RoundTripper
+		proxyTransport ProxyTransport
 	}
 
 	Options struct {
-		Logger         *zap.Logger
-		Port           int    `env:"WEB_PORT" envDefault:"8080"`
-		SocketPath     string `env:"WEB_SOCKET_PATH" envDefault:"/socket"`
-		WorkerCount    int    `env:"WEB_WORKER_COUNT" envDefault:"20"`
-		EnableCORS     bool   `env:"WEB_CORS" envDefault:"false"`
-		EnableProxy    bool   `env:"WEB_PROXY" envDefault:"false"`
-		ProxyTransport func(l *zap.Logger) http.RoundTripper
+		Logger      *zap.Logger
+		Port        int    `env:"WEB_PORT" envDefault:"8080"`
+		SocketPath  string `env:"WEB_SOCKET_PATH" envDefault:"/socket"`
+		WorkerCount int    `env:"WEB_WORKER_COUNT" envDefault:"20"`
+		EnableCORS  bool   `env:"WEB_CORS" envDefault:"false"`
+		EnableProxy bool   `env:"WEB_PROXY" envDefault:"false"`
 	}
+
+	ProxyTransport func(l *zap.Logger) http.RoundTripper
 )
 
 func (s *Server) setupRouter() http.Handler {
@@ -52,15 +53,18 @@ func (s *Server) setupRouter() http.Handler {
 func NewServer(opts Options) *Server {
 	socketServer := sockets.New(opts.Logger, opts.WorkerCount)
 	s := &Server{
-		addr:           ":" + strconv.Itoa(opts.Port),
-		logger:         opts.Logger,
-		socketPath:     opts.SocketPath,
-		router:         newRouter(opts.Logger, opts.EnableCORS),
-		socketServer:   socketServer,
-		proxyTransport: opts.ProxyTransport,
+		addr:         ":" + strconv.Itoa(opts.Port),
+		logger:       opts.Logger,
+		socketPath:   opts.SocketPath,
+		router:       newRouter(opts.Logger, opts.EnableCORS),
+		socketServer: socketServer,
 	}
 
 	return s
+}
+
+func (s *Server) SetProxyTransport(rt ProxyTransport) {
+	s.proxyTransport = rt
 }
 
 // Start runs http listener on the given address

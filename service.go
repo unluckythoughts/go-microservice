@@ -28,11 +28,12 @@ type (
 	}
 
 	Options struct {
-		Name        string `env:"SERVICE_NAME" envDefault:"true"`
-		EnableDB    bool   `env:"SERVICE_ENABLE_DB" envDefault:"true"`
-		DBType      string `env:"SERVICE_DB_TYPE" envDefault:"postgresql"`
-		EnableCache bool   `env:"SERVICE_ENABLE_CACHE" envDefault:"false"`
-		EnableBus   bool   `env:"SERVICE_ENABLE_BUS" envDefault:"false"`
+		Name           string `env:"SERVICE_NAME" envDefault:"true"`
+		EnableDB       bool   `env:"SERVICE_ENABLE_DB" envDefault:"true"`
+		DBType         string `env:"SERVICE_DB_TYPE" envDefault:"postgresql"`
+		EnableCache    bool   `env:"SERVICE_ENABLE_CACHE" envDefault:"false"`
+		EnableBus      bool   `env:"SERVICE_ENABLE_BUS" envDefault:"false"`
+		ProxyTransport web.ProxyTransport
 	}
 
 	service struct {
@@ -101,6 +102,10 @@ func New(opts Options) IService {
 	l := getLogger()
 	l.Named(opts.Name).Info("Starting " + opts.Name + " serice")
 	s := &service{l: l, server: getServer(l.Named(opts.Name))}
+
+	if opts.ProxyTransport != nil {
+		s.server.SetProxyTransport(opts.ProxyTransport)
+	}
 
 	s.slack = alerts.NewSlackClient(l.Named(opts.Name + ":slack"))
 	s.text = alerts.NewTextClient(l.Named(opts.Name + ":text"))
