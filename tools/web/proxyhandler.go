@@ -53,12 +53,15 @@ func santizeProxyUrl(link *url.URL) *url.URL {
 
 func proxyHandler(l *zap.Logger, rt http.RoundTripper) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		l.Debug(fmt.Sprintf("Proxing --> %v %v", r.Method, santizeProxyUrl(r.URL)))
+		newUrl := santizeProxyUrl(r.URL)
+		l.Debug(fmt.Sprintf("Proxing --> %v %v", r.Method, newUrl))
 
 		// Construct filtered header to send to origin server
 		hh := http.Header{}
 		for _, hk := range passthruRequestHeaderKeys {
-			if hv, ok := r.Header[hk]; ok {
+			if hk == "Referer" {
+				hh.Set(hk, newUrl.Scheme+"://"+newUrl.Hostname())
+			} else if hv, ok := r.Header[hk]; ok {
 				hh[hk] = hv
 			}
 		}
@@ -66,7 +69,7 @@ func proxyHandler(l *zap.Logger, rt http.RoundTripper) func(w http.ResponseWrite
 		// Construct request to send to origin server
 		rr := http.Request{
 			Method:        r.Method,
-			URL:           santizeProxyUrl(r.URL),
+			URL:           newUrl,
 			Header:        hh,
 			Body:          r.Body,
 			ContentLength: r.ContentLength,
