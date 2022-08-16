@@ -17,7 +17,7 @@ type (
 		logger         *zap.Logger
 		router         *router
 		socketServer   *sockets.Server
-		proxyTransport func() http.RoundTripper
+		proxyTransport func(l *zap.Logger) http.RoundTripper
 	}
 
 	Options struct {
@@ -27,7 +27,7 @@ type (
 		WorkerCount    int    `env:"WEB_WORKER_COUNT" envDefault:"20"`
 		EnableCORS     bool   `env:"WEB_CORS" envDefault:"false"`
 		EnableProxy    bool   `env:"WEB_PROXY" envDefault:"false"`
-		ProxyTransport func() http.RoundTripper
+		ProxyTransport func(l *zap.Logger) http.RoundTripper
 	}
 )
 
@@ -35,7 +35,7 @@ func (s *Server) setupRouter() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/_proxy") {
 			if s.proxyTransport != nil {
-				proxyHandler(s.logger, s.proxyTransport())(w, r)
+				proxyHandler(s.logger, s.proxyTransport(s.logger))(w, r)
 			} else {
 				proxyHandler(s.logger, http.DefaultTransport)(w, r)
 			}
