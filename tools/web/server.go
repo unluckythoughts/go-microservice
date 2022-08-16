@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/unluckythoughts/go-microservice/tools/sockets"
 	"go.uber.org/zap"
@@ -11,32 +12,53 @@ import (
 type (
 	// Server struct for the simple http server
 	Server struct {
-		addr         string
-		logger       *zap.Logger
-		router       *router
-		socketServer *sockets.Server
+		addr           string
+		socketPath     string
+		logger         *zap.Logger
+		router         *router
+		socketServer   *sockets.Server
+		proxyTransport func() http.RoundTripper
 	}
 
 	Options struct {
-		Logger      *zap.Logger
-		Port        int    `env:"WEB_PORT" envDefault:"8080"`
-		SocketPath  string `env:"WEB_SOCKET_PATH" envDefault:"/socket"`
-		WorkerCount int    `env:"WEB_WORKER_COUNT" envDefault:"20"`
-		EnableCORS  bool   `env:"WEB_CORS" envDefault:"false"`
+		Logger         *zap.Logger
+		Port           int    `env:"WEB_PORT" envDefault:"8080"`
+		SocketPath     string `env:"WEB_SOCKET_PATH" envDefault:"/socket"`
+		WorkerCount    int    `env:"WEB_WORKER_COUNT" envDefault:"20"`
+		EnableCORS     bool   `env:"WEB_CORS" envDefault:"false"`
+		EnableProxy    bool   `env:"WEB_PROXY" envDefault:"false"`
+		ProxyTransport func() http.RoundTripper
 	}
 )
+
+func (s *Server) setupRouter() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/_proxy") {
+			if s.proxyTransport != nil {
+				proxyHandler(s.logger, s.proxyTransport())(w, r)
+			} else {
+				proxyHandler(s.logger, http.DefaultTransport)(w, r)
+			}
+
+		} else if strings.HasPrefix(r.URL.Path, s.socketPath) {
+			http.HandlerFunc(s.upgradeConnection)(w, r)
+		} else {
+			s.router._int.ServeHTTP(w, r)
+		}
+	})
+}
 
 // NewServer returns a new server object
 func NewServer(opts Options) *Server {
 	socketServer := sockets.New(opts.Logger, opts.WorkerCount)
 	s := &Server{
-		addr:         ":" + strconv.Itoa(opts.Port),
-		logger:       opts.Logger,
-		router:       newRouter(opts.Logger, opts.EnableCORS),
-		socketServer: socketServer,
+		addr:           ":" + strconv.Itoa(opts.Port),
+		logger:         opts.Logger,
+		socketPath:     opts.SocketPath,
+		router:         newRouter(opts.Logger, opts.EnableCORS),
+		socketServer:   socketServer,
+		proxyTransport: opts.ProxyTransport,
 	}
-	http.Handle("/", s.router._int)
-	http.Handle(opts.SocketPath, http.HandlerFunc(s.upgradeConnection))
 
 	return s
 }
@@ -45,7 +67,7 @@ func NewServer(opts Options) *Server {
 func (s *Server) Start() {
 	s.socketServer.StartSocketWorkers()
 	s.logger.Info("Web server started on address: " + s.addr)
-	s.logger.Fatal(http.ListenAndServe(s.addr, nil).Error())
+	s.logger.Fatal(http.ListenAndServe(s.addr, s.setupRouter()).Error())
 }
 
 // GetRouter returns the router instance
