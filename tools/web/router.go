@@ -68,6 +68,7 @@ func newRouter(l *zap.Logger, enableCors bool) *router {
 func setCORSHeaders(w http.ResponseWriter) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Access-Control-Allow-Headers", "*")
+	w.Header().Add("Access-Control-Allow-Methods", "*")
 }
 
 // cors http handler function
