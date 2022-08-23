@@ -43,6 +43,21 @@ func NewClient(baseURL string, defaultHeaders ...http.Header) Client {
 	return c
 }
 
+func NewClientWithTransport(baseURL string, transport http.RoundTripper, defaultHeaders ...http.Header) Client {
+	c := &client{
+		baseURL: baseURL,
+		httpClient: &http.Client{
+			Transport: transport,
+		},
+	}
+
+	if len(defaultHeaders) > 0 {
+		c.headers = defaultHeaders[0]
+	}
+
+	return c
+}
+
 func NewProxyClient(baseURL, proxyHost string, defaultHeaders ...http.Header) (Client, error) {
 	httpClient, err := httpproxy.NewProxyClient(proxyHost)
 	if err != nil {
