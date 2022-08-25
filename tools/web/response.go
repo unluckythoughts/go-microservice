@@ -55,8 +55,8 @@ func logResponse(req *request, statusCode int, respBody *bytes.Buffer) {
 	url := req._int.URL.String()
 
 	resp := ""
-	if respBody.Len() > 512 {
-		resp = string(respBody.Bytes()[:250]) + "..." + string(respBody.Bytes()[respBody.Len()-250:])
+	if respBody.Len() > 100 {
+		resp = string(respBody.Bytes()[:45]) + "..." + string(respBody.Bytes()[respBody.Len()-45:])
 	} else {
 		resp = respBody.String()
 	}
