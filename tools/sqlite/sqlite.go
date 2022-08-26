@@ -29,7 +29,7 @@ func New(opts Options) *gorm.DB {
 		panic(errors.Wrapf(err, "could not connect to db"))
 	}
 
-	l := opts.Logger
+	l := opts.Logger.WithOptions(zap.AddCallerSkip(3))
 	if opts.Debug {
 		l = l.WithOptions(zap.IncreaseLevel(zapcore.DebugLevel))
 	} else {

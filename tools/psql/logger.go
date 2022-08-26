@@ -40,10 +40,6 @@ func (dbl *dbLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 	sql, rows := fc()
 	sql = spacePattern.ReplaceAllString(sql, " ")
 
-	if len(sql) > 100 {
-		sql = string(sql[:45]) + "..." + string(sql[len(sql)-45:])
-	}
-
 	dbl.l.With(
 		zap.String("type", "query"),
 		zap.String("duration", elapsed.String()),
