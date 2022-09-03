@@ -109,15 +109,18 @@ func proxyHandler(l *zap.Logger, rt http.RoundTripper) func(w http.ResponseWrite
 		}
 		w.WriteHeader(resp.StatusCode)
 
-		// Transfer response from origin server -> client
-		if resp.ContentLength > 0 {
-			_, err = io.CopyN(w, resp.Body, resp.ContentLength)
-		} else {
-			_, err = io.Copy(w, resp.Body)
-		}
+		if resp.StatusCode != http.StatusNotFound &&
+			resp.StatusCode != http.StatusNoContent {
+			// Transfer response from origin server -> client
+			if resp.ContentLength > 0 {
+				_, err = io.CopyN(w, resp.Body, resp.ContentLength)
+			} else {
+				_, err = io.Copy(w, resp.Body)
+			}
 
-		if err != nil {
-			l.With(zap.Error(err)).Debug("error while reading the body of proxied response")
+			if err != nil {
+				l.With(zap.Error(err)).Debug("error while reading the body of proxied response")
+			}
 		}
 	}
 }
