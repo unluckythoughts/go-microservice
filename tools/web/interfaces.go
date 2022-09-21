@@ -16,6 +16,8 @@ type Router interface {
 	PATCH(string, ...interface{})
 	// DELETE params: path, ...web.Middleware, web.Handler
 	DELETE(string, ...interface{})
+	// ServeFiles attaches path to root dir and serve static files
+	ServeFiles(path string, root http.FileSystem)
 	Use(...Middleware)
 }
 

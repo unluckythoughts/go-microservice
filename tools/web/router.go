@@ -190,3 +190,8 @@ func (r *router) PATCH(path string, handlers ...interface{}) {
 func (r *router) DELETE(path string, handlers ...interface{}) {
 	r._int.DELETE(path, r.routerHandler(handlers))
 }
+
+// ServeFiles attaches path to root dir and serve static files
+func (r *router) ServeFiles(path string, root http.FileSystem) {
+	r._int.ServeFiles(path, root)
+}
