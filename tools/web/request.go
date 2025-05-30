@@ -53,13 +53,13 @@ func (r *request) With(fields ...zapcore.Field) {
 	r.ctx.l = r.ctx.l.With(fields...)
 }
 
-func (r *request) SetContextValue(key string, val interface{}) error {
-	if r.ctx.Value(key) != nil {
+func (r *request) SetContextValue(cKey string, cValue interface{}) error {
+	if r.ctx.Value(cKey) != nil {
 		return errors.New("key already exists in context")
 	}
 
 	// nolint:staticcheck
-	r.ctx.Context = context.WithValue(r.ctx, key, val)
+	r.ctx.Context = context.WithValue(r.ctx, cKey, cValue)
 	return nil
 }
 

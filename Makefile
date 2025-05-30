@@ -31,8 +31,8 @@ check-stack-ready:
 	done; \
 
 init:
-	@rm -rf vendor
-	go mod vendor -v
+	go mod download
+	go mod tidy
 
 setup-example:
 	@docker-compose -f ${EXAMPLE_DOCKER_COMPOSE_FILE} kill 2>&1 1>/dev/null

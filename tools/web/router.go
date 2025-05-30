@@ -6,8 +6,10 @@ import (
 	"reflect"
 	"runtime"
 
+	"github.com/gorilla/sessions"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
+	"github.com/unluckythoughts/go-microservice/utils"
 	"go.uber.org/zap"
 )
 
@@ -17,10 +19,11 @@ type (
 	Middleware func(MiddlewareRequest) error
 
 	router struct {
-		_int        *httprouter.Router
-		l           *zap.Logger
-		cors        bool
-		middlewares []Middleware
+		_int         *httprouter.Router
+		l            *zap.Logger
+		cors         bool
+		middlewares  []Middleware
+		sessionStore SessionStore
 	}
 )
 
@@ -54,14 +57,24 @@ func (r *router) log(w http.ResponseWriter, req *http.Request, p httprouter.Para
 	r.l.Info(p.ByName("message"))
 }
 
-func newRouter(l *zap.Logger, enableCors bool) *router {
+func getSessionStore(l *zap.Logger) SessionStore {
+	sessionOpts := SessionOptions{}
+	utils.ParseEnvironmentVars(&sessionOpts)
+	sessionOpts.Logger = l
+
+	return NewSessionStore(sessionOpts)
+}
+
+func newRouter(opts Options) *router {
 	r := &router{
-		_int: httprouter.New(),
-		l:    l,
-		cors: enableCors,
+		_int:         httprouter.New(),
+		l:            opts.Logger,
+		cors:         opts.EnableCORS,
+		sessionStore: getSessionStore(opts.Logger),
 	}
 
-	r.attachBasicHandlers(enableCors)
+	r.Use(SessionMiddleware(r.sessionStore))
+	r.attachBasicHandlers(opts.EnableCORS)
 	return r
 }
 
@@ -150,6 +163,12 @@ func (r *router) routerHandler(handlers []interface{}) httprouter.Handle {
 
 		req.ctx.l = baseLogger
 		data, err := handler(req)
+
+		session := req.ctx.Value(sessionContextKey).(*sessions.Session)
+		if session != nil {
+			r.sessionStore.Save(httpReq, w, session)
+		}
+
 		if err != nil {
 			sendResponse(resp, nil, err, 500)
 			return

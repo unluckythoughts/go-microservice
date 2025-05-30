@@ -56,7 +56,7 @@ func NewServer(opts Options) *Server {
 		addr:         ":" + strconv.Itoa(opts.Port),
 		logger:       opts.Logger,
 		socketPath:   opts.SocketPath,
-		router:       newRouter(opts.Logger, opts.EnableCORS),
+		router:       newRouter(opts),
 		socketServer: socketServer,
 	}
 
