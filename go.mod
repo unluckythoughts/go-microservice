@@ -1,6 +1,8 @@
 module github.com/unluckythoughts/go-microservice
 
-go 1.19
+go 1.24
+
+toolchain go1.24.3
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
@@ -14,8 +16,8 @@ require (
 	go.uber.org/zap v1.23.0
 	golang.org/x/net v0.0.0-20220822230855-b0a4917ee28c
 	gorm.io/driver/postgres v1.3.9
-	gorm.io/driver/sqlite v1.3.6
-	gorm.io/gorm v1.23.8
+	gorm.io/driver/sqlite v1.5.7
+	gorm.io/gorm v1.30.0
 )
 
 require (
@@ -34,10 +36,10 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/mattn/go-sqlite3 v1.14.15 // indirect
+	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220824171710-5757bc0c5503 // indirect
 	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.25.0 // indirect
 )
