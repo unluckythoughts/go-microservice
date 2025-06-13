@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type httpResponse struct {
+type HTTPResponse struct {
 	Ok    bool        `json:"ok"`
 	ID    string      `json:"id"`
 	Error string      `json:"error,omitempty"`
@@ -50,7 +50,7 @@ func (r *response) AddHeader(key string, values ...string) {
 	}
 }
 
-func logResponse(req *request, statusCode int, respBody *bytes.Buffer) {
+func logResponse(req *request, statusCode int, respBody *bytes.Buffer, respErr error) {
 	method := req._int.Method
 	url := req._int.URL.String()
 
@@ -79,12 +79,16 @@ func logResponse(req *request, statusCode int, respBody *bytes.Buffer) {
 		fields = append(fields, zap.Any("request.routeparams", req.routeParams))
 	}
 
+	if statusCode >= 500 {
+		fields = append(fields, zap.Error(respErr))
+	}
+
 	req.ctx.l.With(fields...).Debug(msg)
 }
 
 // sendResponse function to send response to http requests
 func sendResponse(resp *response, data interface{}, respErr error, statusCode int) {
-	base := httpResponse{
+	base := HTTPResponse{
 		Ok:    true,
 		ID:    resp.request.id,
 		Error: InternalServerError().Error(),
@@ -120,5 +124,5 @@ func sendResponse(resp *response, data interface{}, respErr error, statusCode in
 	}
 
 	fmt.Fprint(resp.respWriter, body)
-	logResponse(resp.request, statusCode, body)
+	logResponse(resp.request, statusCode, body, respErr)
 }
