@@ -101,14 +101,17 @@ func sendResponse(resp *response, data interface{}, respErr error, statusCode in
 		base.Error = ""
 		base.Data = data
 	} else if e, ok := respErr.(*httpError); ok {
+		base.Ok = false
 		statusCode = e.code
 		base.Error = e.message
 		base.Data = nil
 	} else if errors.As(respErr, webError) {
+		base.Ok = false
 		statusCode = webError.code
 		base.Error = webError.message
 		base.Data = nil
 	} else {
+		base.Ok = false
 		base.Error = respErr.Error()
 	}
 
