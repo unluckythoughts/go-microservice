@@ -67,7 +67,7 @@ func (a *auth) GoogleOAuthLogin(r web.Request) (any, error) {
 			Email:         userInfo.Email,
 			GoogleID:      userInfo.ID,
 			GoogleAvatar:  userInfo.Picture,
-			Role:          userRoleDefault, // default role for new users
+			Role:          a.defaultUserRole, // default role for new users
 			EmailVerified: true,
 		}
 

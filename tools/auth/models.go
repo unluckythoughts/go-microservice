@@ -1,47 +1,9 @@
 package auth
 
 import (
-	"fmt"
-	"regexp"
 	"time"
 
 	"gorm.io/gorm"
-)
-
-// Mobile is the mobile number of the user
-type Mobile string
-
-func (m Mobile) IsValid() bool {
-	// Remove any spaces, dashes, or parentheses
-	re := regexp.MustCompile(`[\s\-\(\)]`)
-	mobile := re.ReplaceAllString(string(m), "")
-
-	mobileRegex := regexp.MustCompile(`^\+?[0-9]{10,15}$`)
-	return mobileRegex.MatchString(mobile)
-}
-
-func (m Mobile) getCountryCode() (string, bool) {
-	if m.IsValid() {
-		return string(m[:len(m)-10]), true
-	}
-	return "", false
-}
-
-func (m Mobile) getNumber() (string, bool) {
-	if m.IsValid() {
-		return string(m[len(m)-10:]), true
-	}
-	return "", false
-}
-
-type UserRole uint
-
-func (r *UserRole) Value() string {
-	return fmt.Sprintf("%d", r)
-}
-
-var (
-	userRoleDefault UserRole = 0
 )
 
 type User struct {
@@ -49,7 +11,7 @@ type User struct {
 	Name           string    `gorm:"column:name;not null" json:"name"`
 	Email          string    `gorm:"column:email;not null;uniqueIndex" json:"email"`
 	EmailVerified  bool      `gorm:"column:email_verified;not null;default:false" json:"email_verified"`
-	Mobile         string    `gorm:"column:mobile;uniqueIndex" json:"mobile,omitempty"`
+	Mobile         Mobile    `gorm:"column:mobile;uniqueIndex" json:"mobile,omitempty"`
 	MobileVerified bool      `gorm:"column:mobile_verified;not null;default:false" json:"mobile_verified"`
 	Password       string    `gorm:"column:password;not null" json:"-"`
 	Role           UserRole  `gorm:"column:role;type:int;not null;default:1" json:"role"`
@@ -60,10 +22,15 @@ type User struct {
 	GoogleAvatar string `gorm:"column:google_avatar" json:"google_avatar,omitempty"`
 }
 
-type loginRequest struct {
+type credentials struct {
 	Email    string `json:"email" valid:"email~email is not valid"`
 	Mobile   string `json:"mobile" valid:"mobile~mobile is not valid"`
 	Password string `json:"password" valid:"required~password is required"`
+}
+
+type registerRequest struct {
+	credentials
+	Name string `json:"name" valid:"required~name is required"`
 }
 
 // GoogleOAuthRequest represents the request for Google OAuth login
