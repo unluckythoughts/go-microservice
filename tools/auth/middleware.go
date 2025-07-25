@@ -141,9 +141,9 @@ func GetAuthenticatedUser(r web.Request) (*User, error) {
 	return authUser, nil
 }
 
-func EnsureRole(role UserRole) web.Middleware {
+func (a *Service) EnsureRole(role UserRole) web.Middleware {
 	return func(r web.MiddlewareRequest) error {
-		user, err := GetAuthenticatedUser(r)
+		user, err := a.getUserFromRequest(r)
 		if err != nil {
 			return err
 		}
