@@ -18,7 +18,12 @@ type Router interface {
 	DELETE(string, ...interface{})
 	// ServeFiles attaches path to root dir and serve static files
 	ServeFiles(path string, root http.FileSystem)
+	// Use attaches middlewares to all routes
 	Use(...Middleware)
+	// UseFor set middlewares for a specific path prefix
+	// This allows you to apply middlewares only to routes that start with the given path prefix.
+	// it does not support glob patterns, so you need to specify the exact prefix.
+	UseFor(pathPrefix string, middlewares ...Middleware)
 }
 
 // Request interface implementing general server request
