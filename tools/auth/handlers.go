@@ -7,7 +7,7 @@ import (
 	"github.com/unluckythoughts/go-microservice/tools/web"
 )
 
-func (a *auth) LoginHandler(r web.Request) (any, error) {
+func (a *Service) LoginHandler(r web.Request) (any, error) {
 	details := credentials{}
 	err := r.GetValidatedBody(&details)
 	if err != nil {
@@ -41,7 +41,7 @@ func (a *auth) LoginHandler(r web.Request) (any, error) {
 	return a.getAuthResponse(r.GetContext(), user)
 }
 
-func (a *auth) RegisterHandler(r web.Request) (any, error) {
+func (a *Service) RegisterHandler(r web.Request) (any, error) {
 	details := registerRequest{}
 	err := r.GetValidatedBody(&details)
 	if err != nil {
@@ -76,7 +76,7 @@ func (a *auth) RegisterHandler(r web.Request) (any, error) {
 	return "user registered successfully", nil
 }
 
-func (a *auth) LogoutHandler(r web.Request) (any, error) {
+func (a *Service) LogoutHandler(r web.Request) (any, error) {
 	// Implement logout logic here
 	// This could involve clearing session data or tokens
 	return "logout successful", nil

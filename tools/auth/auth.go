@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type auth struct {
+type Service struct {
 	db           *gorm.DB
 	ignoreRoutes []string
 	jwtKey       string
@@ -94,10 +94,10 @@ func getOptions(override Options) Options {
 	return opts
 }
 
-func NewAuthService(override Options) *auth {
+func NewAuthService(override Options) *Service {
 	opts := getOptions(override)
 
-	a := &auth{
+	a := &Service{
 		db:           opts.DB,
 		ignoreRoutes: opts.IgnoreRoutes,
 		jwtKey:       opts.JwtKey,
@@ -127,10 +127,10 @@ func NewAuthService(override Options) *auth {
 	return a
 }
 
-func (a *auth) RoleName(role UserRole) string {
+func (a *Service) RoleName(role UserRole) string {
 	return a.userRoles[role]
 }
 
-func (a *auth) GetUserRoles() map[UserRole]string {
+func (a *Service) GetUserRoles() map[UserRole]string {
 	return a.userRoles
 }

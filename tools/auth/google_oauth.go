@@ -10,7 +10,7 @@ import (
 )
 
 // getGoogleUserInfo fetches user information from Google OAuth
-func (a *auth) getGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
+func (a *Service) getGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
 	if err != nil {
@@ -38,7 +38,7 @@ func (a *auth) getGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
 }
 
 // GoogleOAuthLogin handles Google OAuth authentication
-func (a *auth) GoogleOAuthLogin(r web.Request) (any, error) {
+func (a *Service) GoogleOAuthLogin(r web.Request) (any, error) {
 	// Extract the OAuth request from the request body
 	oauthReq := &googleOAuthRequest{}
 	err := r.GetValidatedBody(oauthReq)
