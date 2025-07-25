@@ -2,8 +2,11 @@ package auth
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
 	"time"
 
+	"github.com/unluckythoughts/go-microservice/tools/web"
 	"github.com/unluckythoughts/go-microservice/utils"
 	"gorm.io/gorm"
 )
@@ -93,8 +96,32 @@ func (a *Service) UpdateUser(user *User) error {
 	return a.db.Save(user).Error
 }
 
+// UpdateEmailVerified updates the email_verified field for a user
+func (a *Service) UpdateEmailVerified(id uint, verified bool) error {
+	result := a.db.Model(&User{}).Where("id = ?", id).Update("email_verified", verified)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+	return nil
+}
+
+// UpdateMobileVerified updates the mobile_verified field for a user
+func (a *Service) UpdateMobileVerified(id uint, verified bool) error {
+	result := a.db.Model(&User{}).Where("id = ?", id).Update("mobile_verified", verified)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+	return nil
+}
+
 // UpdateUserPartial updates specific fields of a user
-func (a *Service) UpdateUserPartial(id uint, updates map[string]interface{}) error {
+func (a *Service) UpdateUserPartial(id uint, updates any) error {
 	filteredUpdates := make(map[string]any)
 	utils.FilterDBUpdates(updates, &filteredUpdates, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	result := a.db.Model(&User{}).Where("id = ?", id).Updates(filteredUpdates)
@@ -204,14 +231,11 @@ func (a *Service) VerifyUserToken(token string) (*User, error) {
 	var user User
 	err := a.db.Where("verify_token = ? AND verify_token != ''", token).First(&user).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("invalid or expired token")
-		}
-		return nil, err
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid verify token: %w", err))
 	}
 
 	if user.TokenExpiresAt.Before(time.Now()) {
-		return nil, errors.New("token has expired")
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("token has expired"))
 	}
 
 	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")

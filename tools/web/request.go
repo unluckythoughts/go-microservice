@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -85,7 +86,7 @@ func (r *request) GetValidatedBody(ptr any) (err error) {
 	data := r.body.raw
 	if !r.body.read {
 		if data, err = io.ReadAll(r._int.Body); err != nil {
-			return err
+			return NewError(http.StatusBadRequest, fmt.Errorf("failed to read request body: %w", err))
 		}
 		r.body.read = true
 		r.body.raw = data
@@ -96,9 +97,9 @@ func (r *request) GetValidatedBody(ptr any) (err error) {
 	}
 
 	if err = json.Unmarshal(data, ptr); err != nil {
-		return err
+		return NewError(http.StatusBadRequest, fmt.Errorf("failed to read request body: %w", err))
 	} else if _, err = govalidator.ValidateStruct(ptr); err != nil {
-		return err
+		return NewError(http.StatusBadRequest, fmt.Errorf("failed to validate request body: %w", err))
 	}
 
 	return nil
