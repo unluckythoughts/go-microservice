@@ -7,15 +7,15 @@ import (
 // Router interface implementing general router
 type Router interface {
 	// GET params: path, ...web.Middleware, web.Handler
-	GET(string, ...interface{})
+	GET(string, ...any)
 	// POST params: path, ...web.Middleware, web.Handler
-	POST(string, ...interface{})
+	POST(string, ...any)
 	// PUT params: path, ...web.Middleware, web.Handler
-	PUT(string, ...interface{})
+	PUT(string, ...any)
 	// PATCH params: path, ...web.Middleware, web.Handler
-	PATCH(string, ...interface{})
+	PATCH(string, ...any)
 	// DELETE params: path, ...web.Middleware, web.Handler
-	DELETE(string, ...interface{})
+	DELETE(string, ...any)
 	// ServeFiles attaches path to root dir and serve static files
 	ServeFiles(path string, root http.FileSystem)
 	// Use attaches middlewares to all routes
@@ -28,7 +28,7 @@ type Router interface {
 
 // Request interface implementing general server request
 type Request interface {
-	GetValidatedBody(ptr interface{}) error
+	GetValidatedBody(ptr any) error
 	GetHeaders() http.Header
 	GetHeader(key string) string
 	GetURLParam(key string) string
@@ -40,7 +40,7 @@ type Request interface {
 // MiddlewareRequest interface implementing general middleware request
 type MiddlewareRequest interface {
 	Request
-	SetContextValue(key string, value interface{}) error
+	SetContextValue(key any, value any) error
 }
 
 // Response interface implementing general server response

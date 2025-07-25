@@ -16,7 +16,7 @@ import (
 
 type (
 	// Handler function for the router
-	Handler    func(Request) (interface{}, error)
+	Handler    func(Request) (any, error)
 	Middleware func(MiddlewareRequest) error
 
 	router struct {
@@ -41,7 +41,7 @@ func (r *router) methodNotAllowedHandler(w http.ResponseWriter, req *http.Reques
 }
 
 // panicHandler panic http handler function
-func (r *router) panicHandler(w http.ResponseWriter, req *http.Request, err interface{}) {
+func (r *router) panicHandler(w http.ResponseWriter, req *http.Request, err any) {
 	panicErr := errors.New(err.(error).Error())
 	sendResponse(newResponse(w, r.newRequest(req, nil)), nil, panicErr, 500)
 }
@@ -70,9 +70,9 @@ func getSessionStore(l *zap.Logger) SessionStore {
 func newRouter(opts Options) *router {
 	r := &router{
 		_int:         httprouter.New(),
-		l:            opts.Logger,
+		l:            opts.Logger.Named("router"),
 		cors:         opts.EnableCORS,
-		sessionStore: getSessionStore(opts.Logger),
+		sessionStore: getSessionStore(opts.Logger.Named("session")),
 	}
 
 	r.Use(SessionMiddleware(r.sessionStore))
@@ -114,11 +114,11 @@ func getFuncName(f any) string {
 }
 
 // getHandler extracts the Handler from the provided function.
-// It expects the function to be of type func(Request) (interface{}, error).
+// It expects the function to be of type func(Request) (any, error).
 func (r *router) getHandler(f any) (Handler, bool) {
 	fn, ok := f.(func(Request) (any, error))
 	if !ok {
-		r.l.Error("handler should be of type func(web.Request) (interface{}, error)")
+		r.l.Error("handler should be of type func(web.Request) (any, error)")
 		return nil, ok
 	}
 	return Handler(fn), ok
@@ -239,27 +239,27 @@ func (r *router) UseFor(pathPrefix string, middlewares ...Middleware) {
 }
 
 // GET attaches route with given path and handlers (...Middleware, Handler)
-func (r *router) GET(path string, handlers ...interface{}) {
+func (r *router) GET(path string, handlers ...any) {
 	r._int.GET(path, r.getRouterHandlerForPath(path, handlers))
 }
 
 // POST attaches route with given path and handlers (...Middleware, Handler)
-func (r *router) POST(path string, handlers ...interface{}) {
+func (r *router) POST(path string, handlers ...any) {
 	r._int.POST(path, r.getRouterHandlerForPath(path, handlers))
 }
 
 // PUT attaches route with given path and handlers (...Middleware, Handler)
-func (r *router) PUT(path string, handlers ...interface{}) {
+func (r *router) PUT(path string, handlers ...any) {
 	r._int.PUT(path, r.getRouterHandlerForPath(path, handlers))
 }
 
 // PATCH attaches route with given path and handlers (...Middleware, Handler)
-func (r *router) PATCH(path string, handlers ...interface{}) {
+func (r *router) PATCH(path string, handlers ...any) {
 	r._int.PATCH(path, r.getRouterHandlerForPath(path, handlers))
 }
 
 // DELETE attaches route with given path and handlers (...Middleware, Handler)
-func (r *router) DELETE(path string, handlers ...interface{}) {
+func (r *router) DELETE(path string, handlers ...any) {
 	r._int.DELETE(path, r.getRouterHandlerForPath(path, handlers))
 }
 

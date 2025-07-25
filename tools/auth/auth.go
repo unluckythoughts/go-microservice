@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/unluckythoughts/go-microservice/utils"
+	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"gorm.io/gorm"
@@ -11,6 +13,7 @@ import (
 
 type Service struct {
 	db           *gorm.DB
+	l            *zap.Logger
 	ignoreRoutes []string
 	jwtKey       string
 	tokenValid   time.Duration
@@ -25,6 +28,8 @@ type Service struct {
 type Options struct {
 	// DB is the database connection, if nil, it will use the default database connection
 	DB *gorm.DB
+	// Logger is the logger to use, if nil, it will use the default logger
+	Logger *zap.Logger
 	// JwtKey is the secret key used to sign JWT tokens
 	// If empty, it will panic
 	JwtKey string `env:"AUTH_JWT_KEY"`
@@ -61,6 +66,11 @@ func getOptions(override Options) Options {
 
 	if override.DB != nil {
 		opts.DB = override.DB
+	}
+	if override.Logger != nil {
+		opts.Logger = override.Logger
+	} else {
+		panic("Logger is required for auth service")
 	}
 	if override.JwtKey != "" {
 		opts.JwtKey = override.JwtKey
@@ -99,6 +109,7 @@ func NewAuthService(override Options) *Service {
 
 	a := &Service{
 		db:           opts.DB,
+		l:            opts.Logger,
 		ignoreRoutes: opts.IgnoreRoutes,
 		jwtKey:       opts.JwtKey,
 		tokenValid:   time.Duration(opts.TokenValidInHours) * time.Hour,
@@ -127,14 +138,35 @@ func NewAuthService(override Options) *Service {
 	return a
 }
 
+// RoleName returns the name of the role for the given UserRole
 func (a *Service) RoleName(role UserRole) string {
 	return a.userRoles[role]
 }
 
+// addIgnoreRoute adds the given routes to the ignore list
+// These routes do not require authentication
+// This is useful for routes like login, register, etc.
 func (a *Service) AddIgnoreRoute(routes ...string) {
 	a.ignoreRoutes = append(a.ignoreRoutes, routes...)
 }
 
+// FormatMobileNumber formats the mobile number to include the default country code
+func (a *Service) FormatMobileNumber(mobile string) string {
+	if mobile == "" {
+		return ""
+	}
+
+	if len(mobile) < 10 {
+		mobile = fmt.Sprintf("+%s %s", a.defaultMobileCountryCode, mobile)
+		return mobile
+	}
+
+	mobile = fmt.Sprintf("+%s %s", mobile[:len(mobile)-10], mobile[len(mobile)-10:])
+	return mobile
+}
+
+// GetUserRoles returns the map of user roles defined in the Service.
+// It does not take any input parameters and returns a map where the key is UserRole and the value is the role name.
 func (a *Service) GetUserRoles() map[UserRole]string {
 	return a.userRoles
 }
