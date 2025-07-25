@@ -131,6 +131,10 @@ func (a *Service) RoleName(role UserRole) string {
 	return a.userRoles[role]
 }
 
+func (a *Service) AddIgnoreRoute(routes ...string) {
+	a.ignoreRoutes = append(a.ignoreRoutes, routes...)
+}
+
 func (a *Service) GetUserRoles() map[UserRole]string {
 	return a.userRoles
 }
