@@ -9,7 +9,7 @@ import (
 )
 
 func (a *Service) LoginHandler(r web.Request) (any, error) {
-	details := credentials{}
+	details := Credentials{}
 	err := r.GetValidatedBody(&details)
 	if err != nil {
 		return "", err
@@ -43,7 +43,7 @@ func (a *Service) LoginHandler(r web.Request) (any, error) {
 }
 
 func (a *Service) RegisterHandler(r web.Request) (any, error) {
-	details := registerRequest{}
+	details := RegisterRequest{}
 	err := r.GetValidatedBody(&details)
 	if err != nil {
 		return "", err
@@ -93,7 +93,7 @@ func (a *Service) UpdateUserHandler(r web.Request) (any, error) {
 		return nil, err
 	}
 
-	body := updateUserRequest{}
+	body := UpdateUserRequest{}
 	err = r.GetValidatedBody(&body)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (a *Service) ChangePasswordHandler(r web.Request) (any, error) {
 		return nil, err
 	}
 
-	body := changePasswordRequest{}
+	body := ChangePasswordRequest{}
 	err = r.GetValidatedBody(&body)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (a *Service) VerifyHandler(r web.Request) (any, error) {
 }
 
 func (a *Service) UpdatePasswordHandler(r web.Request) (any, error) {
-	body := updatePasswordRequest{}
+	body := UpdatePasswordRequest{}
 	err := r.GetValidatedBody(&body)
 	if err != nil {
 		return nil, err
@@ -173,7 +173,7 @@ func (a *Service) UpdatePasswordHandler(r web.Request) (any, error) {
 }
 
 func (a *Service) SendVerificationHandler(r web.Request) (any, error) {
-	body := sendVerificationRequest{}
+	body := SendVerificationRequest{}
 	err := r.GetValidatedBody(&body)
 	if err != nil {
 		return nil, err

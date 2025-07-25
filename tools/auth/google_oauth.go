@@ -40,7 +40,7 @@ func (a *Service) getGoogleUserInfo(accessToken string) (*googleUserInfo, error)
 // GoogleOAuthLogin handles Google OAuth authentication
 func (a *Service) GoogleOAuthLogin(r web.Request) (any, error) {
 	// Extract the OAuth request from the request body
-	oauthReq := &googleOAuthRequest{}
+	oauthReq := &GoogleOAuthRequest{}
 	err := r.GetValidatedBody(oauthReq)
 	if err != nil {
 		return nil, web.NewError(http.StatusBadRequest, err)

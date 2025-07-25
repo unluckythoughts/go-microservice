@@ -22,40 +22,40 @@ type User struct {
 	GoogleAvatar string `gorm:"column:google_avatar" json:"google_avatar,omitempty"`
 }
 
-type credentials struct {
+type Credentials struct {
 	Email    string `json:"email" valid:"email~email is not valid"`
 	Mobile   string `json:"mobile" valid:"mobile~mobile is not valid"`
 	Password string `json:"password" valid:"required~password is required"`
 }
 
-type registerRequest struct {
-	credentials
+type RegisterRequest struct {
+	Credentials
 	Name string `json:"name" valid:"required~name is required"`
 }
 
-type updateUserRequest struct {
+type UpdateUserRequest struct {
 	Name   string `json:"name" valid:"required~name is required"`
 	Email  string `json:"email" valid:"email~email is not valid"`
 	Mobile string `json:"mobile" valid:"mobile~mobile is not valid"`
 }
 
-type updatePasswordRequest struct {
+type UpdatePasswordRequest struct {
 	VerifyToken string `json:"verify_token" valid:"required~verification token is required"`
 	NewPassword string `json:"new_password" valid:"required~new password is required"`
 }
 
-type changePasswordRequest struct {
+type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password" valid:"required~old password is required"`
 	NewPassword string `json:"new_password" valid:"required~new password is required"`
 }
 
-type sendVerificationRequest struct {
+type SendVerificationRequest struct {
 	Email  string `json:"email" valid:"email~email is not valid"`
 	Mobile string `json:"mobile" valid:"mobile~mobile is not valid"`
 }
 
 // GoogleOAuthRequest represents the request for Google OAuth login
-type googleOAuthRequest struct {
+type GoogleOAuthRequest struct {
 	Code        string `json:"code" valid:"required~authorization code is required"`
 	RedirectURI string `json:"redirect_uri" valid:"required~redirect URI is required"`
 }
