@@ -22,6 +22,10 @@ type User struct {
 	GoogleAvatar string `gorm:"column:google_avatar" json:"google_avatar,omitempty"`
 }
 
+type LoginResponse struct {
+	Token string `json:"token"`
+}
+
 type Credentials struct {
 	Email    string `json:"email" valid:"email~email is not valid"`
 	Mobile   string `json:"mobile" valid:"mobile~mobile is not valid"`

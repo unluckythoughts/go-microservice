@@ -12,10 +12,12 @@ import (
 	"github.com/unluckythoughts/go-microservice/tools/web"
 )
 
-func (a *Service) getAuthResponse(ctx web.Context, user *User) (map[string]any, error) {
+func (a *Service) getAuthResponse(ctx web.Context, user *User) (LoginResponse, error) {
+	resp := LoginResponse{}
+
 	err := ctx.PutSessionValue("user_id", user.ID)
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 
 	// Generate a JWT token for the user
@@ -27,12 +29,11 @@ func (a *Service) getAuthResponse(ctx web.Context, user *User) (map[string]any, 
 		"exp": time.Now().Add(a.tokenValid).Unix(),
 	})
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 
-	return map[string]any{
-		"bearer-token": strToken,
-	}, nil
+	resp.Token = strToken
+	return resp, nil
 }
 
 func (a *Service) isRouteIgnored(path string) bool {
