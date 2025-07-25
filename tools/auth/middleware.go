@@ -79,35 +79,73 @@ func getUserDataFromAuthHeader(headerValue string, secret string) (uint, error) 
 
 	return uint(intUserID), nil
 }
+func (a *auth) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
+	userID, err := getUserDataFromAuthHeader(r.GetHeader("Authorization"), a.jwtKey)
+	if err != nil {
+		return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: %w", err))
+	}
 
-func (a *auth) GetAuthMiddleware(role UserRole) web.Middleware {
+	// If the user ID is not found in the header, check the session
+	if userID == 0 {
+		strUserID, err := r.GetContext().GetSessionValue("user_id")
+		if err != nil {
+			return nil, web.NewError(http.StatusUnauthorized, errors.New("unauthorized: Please log in to access this link"))
+		}
+
+		userID, ok := strUserID.(uint)
+		if !ok || userID <= 0 {
+			return nil, web.NewError(http.StatusUnauthorized, errors.New("unauthorized: Please log in to access this link"))
+		}
+	}
+
+	// Check if the user exists in the database
+	user, err := a.GetUserByID(userID)
+	if err != nil {
+		return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: Please log in to access this link; %w", err))
+	}
+
+	return user, nil
+}
+
+func (a *auth) GetAuthMiddleware() web.Middleware {
 	return func(r web.MiddlewareRequest) error {
 		if a.isRouteIgnored(r.GetPath()) {
 			return nil
 		}
 
-		userID, err := getUserDataFromAuthHeader(r.GetHeader("Authorization"), a.jwtKey)
+		user, err := a.getUserFromRequest(r)
 		if err != nil {
-			return web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: %w", err))
+			return err
 		}
 
-		// If the user ID is not found in the header, check the session
-		if userID == 0 {
-			strUserID, err := r.GetContext().GetSessionValue("user_id")
-			if err != nil {
-				return web.NewError(http.StatusUnauthorized, errors.New("unauthorized: Please log in to access this link"))
-			}
+		r.GetContext().PutSessionValue("user", user)
+		return nil
+	}
+}
 
-			userID, ok := strUserID.(uint)
-			if !ok || userID <= 0 {
-				return web.NewError(http.StatusUnauthorized, errors.New("unauthorized: Please log in to access this link"))
-			}
-		}
+func GetAuthenticatedUser(r web.Request) (*User, error) {
+	user, err := r.GetContext().GetSessionValue("user")
+	if err != nil {
+		return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: %w", err))
+	}
 
-		// Check if the user exists in the database
-		user, err := a.GetUserByID(userID)
+	if user == nil {
+		return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: Please log in to access this link"))
+	}
+
+	authUser, ok := user.(*User)
+	if !ok {
+		return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("internal server error: user data is not valid"))
+	}
+
+	return authUser, nil
+}
+
+func EnsureRole(role UserRole) web.Middleware {
+	return func(r web.MiddlewareRequest) error {
+		user, err := GetAuthenticatedUser(r)
 		if err != nil {
-			return web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: Please log in to access this link; %w", err))
+			return err
 		}
 
 		if user.Role >= role {
