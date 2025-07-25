@@ -28,6 +28,7 @@ type Request interface {
 	GetHeader(key string) string
 	GetURLParam(key string) string
 	GetRouteParam(key string) string
+	GetPath() string
 	GetContext() Context
 }
 

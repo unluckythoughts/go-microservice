@@ -14,13 +14,16 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/pkg/errors v0.9.1
 	go.uber.org/zap v1.27.0
+	golang.org/x/crypto v0.38.0
 	golang.org/x/net v0.40.0
+	golang.org/x/oauth2 v0.30.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.30.0
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
@@ -35,7 +38,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect

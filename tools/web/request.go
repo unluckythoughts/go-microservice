@@ -67,6 +67,10 @@ func (r *request) GetContext() Context {
 	return r.ctx
 }
 
+func (r *request) GetPath() string {
+	return r._int.URL.Path
+}
+
 // GetValidatedBody validates the body and updates the ptr reference, errors if any issues
 func (r *request) GetValidatedBody(ptr interface{}) (err error) {
 	data := r.body.raw
