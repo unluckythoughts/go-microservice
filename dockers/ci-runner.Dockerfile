@@ -2,7 +2,7 @@ FROM vektra/mockery:v2.8.0 as mockery
 FROM bitnami/kubectl:latest as kube
 FROM digitalocean/doctl as do
 
-FROM golang:1.15
+FROM golang:1.24
 RUN apt-get update
 RUN apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
