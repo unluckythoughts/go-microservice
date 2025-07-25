@@ -39,6 +39,8 @@ func (a *Service) GetUserByID(id uint) (*User, error) {
 		}
 		return nil, err
 	}
+
+	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	return &user, nil
 }
 
@@ -52,6 +54,7 @@ func (a *Service) GetUserByEmail(email string) (*User, error) {
 		}
 		return nil, err
 	}
+	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	return &user, nil
 }
 
@@ -65,6 +68,7 @@ func (a *Service) GetUserByMobile(mobile string) (*User, error) {
 		}
 		return nil, err
 	}
+	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	return &user, nil
 }
 
@@ -72,6 +76,7 @@ func (a *Service) GetUserByMobile(mobile string) (*User, error) {
 func (a *Service) GetAllUsers(offset, limit int) ([]User, error) {
 	var users []User
 	err := a.db.Preload("Addresses").Offset(offset).Limit(limit).Find(&users).Error
+	utils.ClearValues(&users, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	return users, err
 }
 
@@ -90,7 +95,9 @@ func (a *Service) UpdateUser(user *User) error {
 
 // UpdateUserPartial updates specific fields of a user
 func (a *Service) UpdateUserPartial(id uint, updates map[string]interface{}) error {
-	result := a.db.Model(&User{}).Where("id = ?", id).Updates(updates)
+	filteredUpdates := make(map[string]any)
+	utils.FilterDBUpdates(updates, &filteredUpdates, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
+	result := a.db.Model(&User{}).Where("id = ?", id).Updates(filteredUpdates)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -160,6 +167,7 @@ func (a *Service) GetUserByGoogleID(googleID string) (*User, error) {
 		}
 		return nil, err
 	}
+	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	return &user, nil
 }
 
@@ -206,6 +214,7 @@ func (a *Service) VerifyUserToken(token string) (*User, error) {
 		return nil, errors.New("token has expired")
 	}
 
+	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	return &user, nil
 }
 
@@ -258,6 +267,7 @@ func (a *Service) VerifyUserPasswordByEmail(email, password string) (*User, bool
 		return nil, false, err
 	}
 
+	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	return &user, isValid, nil
 }
 
@@ -277,6 +287,7 @@ func (a *Service) VerifyUserPasswordByMobile(mobile, password string) (*User, bo
 		return nil, false, err
 	}
 
+	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	return &user, isValid, nil
 }
 
