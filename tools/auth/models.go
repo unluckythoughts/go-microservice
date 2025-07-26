@@ -33,8 +33,10 @@ type Credentials struct {
 }
 
 type RegisterRequest struct {
-	Credentials
-	Name string `json:"name" valid:"required~name is required"`
+	Email    string `json:"email" valid:"email~email is not valid"`
+	Mobile   string `json:"mobile" valid:"mobile~mobile is not valid"`
+	Password string `json:"password" valid:"required~password is required"`
+	Name     string `json:"name" valid:"required~name is required"`
 }
 
 type UpdateUserRequest struct {
