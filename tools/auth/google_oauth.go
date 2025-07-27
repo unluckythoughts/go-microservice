@@ -9,6 +9,14 @@ import (
 	"github.com/unluckythoughts/go-microservice/tools/web"
 )
 
+// getFirstKey returns the first key from a map
+func getFirstKey(m map[UserRole]string) UserRole {
+	for key := range m {
+		return key
+	}
+	return 0
+}
+
 // getGoogleUserInfo fetches user information from Google OAuth
 func (a *Service) getGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
 	client := &http.Client{}
@@ -69,7 +77,7 @@ func (a *Service) GoogleOAuthLogin(r web.Request) (any, error) {
 			Email:         userInfo.Email,
 			GoogleID:      userInfo.ID,
 			GoogleAvatar:  userInfo.Picture,
-			Role:          a.defaultUserRole, // default role for new users
+			Role:          getFirstKey(a.userRoles), // Default to user role
 			EmailVerified: true,
 		}
 

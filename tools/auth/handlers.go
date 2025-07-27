@@ -42,39 +42,41 @@ func (a *Service) LoginHandler(r web.Request) (any, error) {
 	return a.getAuthResponse(r.GetContext(), user)
 }
 
-func (a *Service) RegisterHandler(r web.Request) (any, error) {
-	details := RegisterRequest{}
-	err := r.GetValidatedBody(&details)
-	if err != nil {
-		return "", err
-	}
-
-	if details.Email == "" && details.Mobile == "" {
-		return "", web.NewError(http.StatusBadRequest, fmt.Errorf("email or mobile is required"))
-	}
-
-	user := User{
-		Name:     details.Name,
-		Email:    details.Email,
-		Role:     a.defaultUserRole,
-		Password: details.Password,
-	}
-
-	if details.Mobile != "" {
-		var mobile Mobile
-		err := mobile.Set(details.Mobile)
+func (a *Service) GetRoleUserRegister(role UserRole) web.Handler {
+	return func(r web.Request) (any, error) {
+		details := RegisterRequest{}
+		err := r.GetValidatedBody(&details)
 		if err != nil {
-			return "", web.NewError(http.StatusBadRequest, fmt.Errorf("invalid mobile number: %w", err))
+			return "", err
 		}
-		user.Mobile = mobile
-	}
 
-	err = a.CreateUser(&user)
-	if err != nil {
-		return "", err
-	}
+		if details.Email == "" && details.Mobile == "" {
+			return "", web.NewError(http.StatusBadRequest, fmt.Errorf("email or mobile is required"))
+		}
 
-	return "user registered successfully", nil
+		user := User{
+			Name:     details.Name,
+			Email:    details.Email,
+			Role:     role,
+			Password: details.Password,
+		}
+
+		if details.Mobile != "" {
+			var mobile Mobile
+			err := mobile.Set(details.Mobile)
+			if err != nil {
+				return "", web.NewError(http.StatusBadRequest, fmt.Errorf("invalid mobile number: %w", err))
+			}
+			user.Mobile = mobile
+		}
+
+		err = a.CreateUser(&user)
+		if err != nil {
+			return "", err
+		}
+
+		return "user registered successfully", nil
+	}
 }
 
 func (a *Service) LogoutHandler(r web.Request) (any, error) {

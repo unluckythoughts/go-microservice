@@ -20,7 +20,6 @@ type Service struct {
 	// Roles are defined as a map where the key is UserRole and the value is the role name
 	// Higher value UserRoles have more privileges and can access all resources of lower value UserRoles
 	userRoles                map[UserRole]string
-	defaultUserRole          UserRole
 	defaultMobileCountryCode string
 	GoogleOauthConfig        oauth2.Config
 }
@@ -45,10 +44,6 @@ type Options struct {
 	// Higher UserRole(uint) has more privileges and can access all resources of lower UserRole(uint).
 	// Default roles are 0:user, 99:admin
 	UserRoles map[UserRole]string
-
-	// Default UserRole for new users
-	DefaultUserRole int `env:"AUTH_DEFAULT_USER_ROLE" envDefault:"0"`
-
 	// Default Mobile country code for new users
 	DefaultMobileCountryCode string `env:"AUTH_DEFAULT_MOBILE_COUNTRY_CODE" envDefault:"+1"`
 
@@ -76,9 +71,6 @@ func getOptions(override Options) Options {
 	}
 	if override.TokenValidInHours > 0 {
 		opts.TokenValidInHours = override.TokenValidInHours
-	}
-	if override.DefaultUserRole != 0 {
-		opts.DefaultUserRole = override.DefaultUserRole
 	}
 	if override.DefaultMobileCountryCode != "" {
 		opts.DefaultMobileCountryCode = override.DefaultMobileCountryCode
@@ -124,7 +116,6 @@ func NewAuthService(override Options) *Service {
 		}
 	}
 
-	a.defaultUserRole = UserRole(opts.DefaultUserRole)
 	a.defaultMobileCountryCode = opts.DefaultMobileCountryCode
 
 	return a
