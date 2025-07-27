@@ -22,7 +22,7 @@ type Service struct {
 	userRoles                map[UserRole]string
 	defaultUserRole          UserRole
 	defaultMobileCountryCode string
-	googleOAuthConfig        oauth2.Config
+	GoogleOauthConfig        oauth2.Config
 }
 
 type Options struct {
@@ -56,7 +56,6 @@ type Options struct {
 	GoogleOauth struct {
 		ClientID     string `env:"CLIENT_ID"`
 		ClientSecret string `env:"CLIENT_SECRET"`
-		RedirectURI  string `env:"REDIRECT_URI"`
 	} `envPrefix:"AUTH_GOOGLE_"`
 }
 
@@ -95,12 +94,6 @@ func getOptions(override Options) Options {
 		opts.GoogleOauth.ClientSecret = override.GoogleOauth.ClientSecret
 	}
 
-	if override.GoogleOauth.RedirectURI != "" {
-		opts.GoogleOauth.RedirectURI = override.GoogleOauth.RedirectURI
-	} else if opts.GoogleOauth.RedirectURI == "" {
-		panic("Google OAuth Redirect URI is required")
-	}
-
 	return opts
 }
 
@@ -123,10 +116,9 @@ func NewAuthService(override Options) *Service {
 	}
 
 	if opts.GoogleOauth.ClientID != "" && opts.GoogleOauth.ClientSecret != "" {
-		a.googleOAuthConfig = oauth2.Config{
+		a.GoogleOauthConfig = oauth2.Config{
 			ClientID:     opts.GoogleOauth.ClientID,
 			ClientSecret: opts.GoogleOauth.ClientSecret,
-			RedirectURL:  opts.GoogleOauth.RedirectURI,
 			Scopes: []string{
 				"https://www.googleapis.com/auth/userinfo.email",
 				"https://www.googleapis.com/auth/userinfo.profile",

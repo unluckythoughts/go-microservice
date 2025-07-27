@@ -46,8 +46,10 @@ func (a *Service) GoogleOAuthLogin(r web.Request) (any, error) {
 		return nil, web.NewError(http.StatusBadRequest, err)
 	}
 
+	a.GoogleOauthConfig.RedirectURL = oauthReq.RedirectURI
+
 	// Exchange authorization code for access token
-	token, err := a.googleOAuthConfig.Exchange(context.Background(), oauthReq.Code)
+	token, err := a.GoogleOauthConfig.Exchange(context.Background(), oauthReq.Code)
 	if err != nil {
 		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("failed to exchange code for token: %w", err))
 	}
