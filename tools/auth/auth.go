@@ -40,14 +40,14 @@ type Options struct {
 	// Default is /api/v1/auth/login
 	// This can be a comma-separated list of routes
 	// e.g. /api/v1/auth/login,/api/v1/auth/register
-	IgnoreRoutes []string `env:"AUTH_IGNORE_ROUTES" envDefault:"/api/v1/auth/login"`
+	IgnoreRoutes []string
 	// Roles are defined as a map where the key is UserRole(uint) and the value is the role name.
 	// Higher UserRole(uint) has more privileges and can access all resources of lower UserRole(uint).
 	// Default roles are 0:user, 99:admin
-	UserRoles map[UserRole]string `env:"AUTH_USER_ROLES" envDefault:"0:user,99:admin"`
+	UserRoles map[UserRole]string
 
 	// Default UserRole for new users
-	DefaultUserRole UserRole `env:"AUTH_DEFAULT_USER_ROLE" envDefault:"0"`
+	DefaultUserRole int `env:"AUTH_DEFAULT_USER_ROLE" envDefault:"0"`
 
 	// Default Mobile country code for new users
 	DefaultMobileCountryCode string `env:"AUTH_DEFAULT_MOBILE_COUNTRY_CODE" envDefault:"+1"`
@@ -77,12 +77,6 @@ func getOptions(override Options) Options {
 	if override.TokenValidInHours > 0 {
 		opts.TokenValidInHours = override.TokenValidInHours
 	}
-	if len(override.IgnoreRoutes) > 0 {
-		opts.IgnoreRoutes = override.IgnoreRoutes
-	}
-	if len(override.UserRoles) > 0 {
-		opts.UserRoles = override.UserRoles
-	}
 	if override.DefaultUserRole != 0 {
 		opts.DefaultUserRole = override.DefaultUserRole
 	}
@@ -93,6 +87,9 @@ func getOptions(override Options) Options {
 		opts.GoogleOauth.ClientID = override.GoogleOauth.ClientID
 		opts.GoogleOauth.ClientSecret = override.GoogleOauth.ClientSecret
 	}
+
+	opts.IgnoreRoutes = override.IgnoreRoutes
+	opts.UserRoles = override.UserRoles
 
 	return opts
 }
@@ -127,6 +124,9 @@ func NewAuthService(override Options) *Service {
 		}
 	}
 
+	a.defaultUserRole = UserRole(opts.DefaultUserRole)
+	a.defaultMobileCountryCode = opts.DefaultMobileCountryCode
+
 	return a
 }
 
@@ -153,7 +153,7 @@ func (a *Service) FormatMobileNumber(mobile string) string {
 		return mobile
 	}
 
-	mobile = fmt.Sprintf("+%s %s", mobile[:len(mobile)-10], mobile[len(mobile)-10:])
+	mobile = fmt.Sprintf("%s %s", mobile[:len(mobile)-10], mobile[len(mobile)-10:])
 	return mobile
 }
 
