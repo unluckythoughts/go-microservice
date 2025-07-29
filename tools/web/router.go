@@ -116,10 +116,13 @@ func getFuncName(f any) string {
 // getHandler extracts the Handler from the provided function.
 // It expects the function to be of type func(Request) (any, error).
 func (r *router) getHandler(f any) (Handler, bool) {
-	fn, ok := f.(func(Request) (any, error))
+	fn, ok := f.(Handler)
 	if !ok {
-		r.l.Error("handler should be of type func(web.Request) (any, error)")
-		return nil, ok
+		fn, ok = f.(func(Request) (any, error))
+		if !ok {
+			r.l.Error(fmt.Sprintf("handler should be of type web.Handler or func(web.Request) (any, error) but got: %T", f))
+			return nil, ok
+		}
 	}
 	return Handler(fn), ok
 }
