@@ -64,7 +64,7 @@ func ClearValues(obj any, columns ...string) error {
 	}
 
 	if reflect.TypeOf(obj).Kind() != reflect.Slice {
-		return clearValuesForObject(&obj, columns...)
+		return clearValuesForObject(obj, columns...)
 	}
 
 	for i := 0; i < reflect.ValueOf(obj).Len(); i++ {
