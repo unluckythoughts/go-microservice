@@ -5,6 +5,23 @@ import (
 	"regexp"
 )
 
+func IsValidPassword(password string) bool {
+	if len(password) < 10 || len(password) > 64 {
+		return false
+	}
+
+	// Check for at least one lowercase letter
+	hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
+	// Check for at least one uppercase letter
+	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
+	// Check for at least one digit
+	hasDigit := regexp.MustCompile(`[0-9]`).MatchString(password)
+	// Check for at least one special character
+	hasSpecial := regexp.MustCompile(`[\W_]`).MatchString(password)
+
+	return hasLower && hasUpper && hasDigit && hasSpecial
+}
+
 // Mobile is the mobile number of the user
 type Mobile string
 

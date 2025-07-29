@@ -54,6 +54,10 @@ func (a *Service) GetRoleUserRegister(role UserRole) web.Handler {
 			return "", web.NewError(http.StatusBadRequest, fmt.Errorf("email or mobile is required"))
 		}
 
+		if !IsValidPassword(details.Password) {
+			return "", web.NewError(http.StatusBadRequest, fmt.Errorf("password must be at least 10 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character"))
+		}
+
 		user := User{
 			Name:     details.Name,
 			Email:    details.Email,
@@ -121,6 +125,10 @@ func (a *Service) ChangePasswordHandler(r web.Request) (any, error) {
 		return nil, err
 	}
 
+	if !IsValidPassword(body.NewPassword) {
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("new password must be at least 10 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character"))
+	}
+
 	err = a.ChangeUserPassword(user.ID, body.OldPassword, body.NewPassword)
 	if err != nil {
 		return nil, err
@@ -164,6 +172,10 @@ func (a *Service) UpdatePasswordHandler(r web.Request) (any, error) {
 	}
 	if body.VerifyToken == "" || body.NewPassword == "" {
 		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("verify token and new password are required"))
+	}
+
+	if !IsValidPassword(body.NewPassword) {
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("new password must be at least 10 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character"))
 	}
 
 	_, err = a.VerifyUserToken(body.VerifyToken)
