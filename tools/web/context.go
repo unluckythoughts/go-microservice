@@ -19,6 +19,7 @@ type Context interface {
 	SetSession(session *sessions.Session)
 	GetSessionValue(key string) (any, error)
 	PutSessionValue(key string, value any) error
+	RemoveSession() error
 }
 
 type ctx struct {
@@ -67,4 +68,16 @@ func (c *ctx) PutSessionValue(key string, value any) error {
 
 func (c *ctx) SetSession(session *sessions.Session) {
 	c.Context = context.WithValue(c, sessionContextKey, session)
+}
+
+func (c *ctx) RemoveSession() error {
+	session, ok := c.Value(sessionContextKey).(*sessions.Session)
+	if !ok {
+		return errors.New("session not found in request context")
+	}
+
+	session.Options.MaxAge = -1
+	c.Context = context.WithValue(c, sessionContextKey, session)
+
+	return nil
 }
