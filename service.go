@@ -1,6 +1,8 @@
 package microservice
 
 import (
+	"strings"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/unluckythoughts/go-microservice/tools/bus"
 	"github.com/unluckythoughts/go-microservice/tools/cache"
@@ -99,34 +101,36 @@ func getBus(l *zap.Logger) bus.IBus {
 }
 
 func New(opts Options) IService {
-	l := getLogger()
-	l.Named(opts.Name).Info("Starting " + opts.Name + " serice")
-	s := &service{l: l, server: getServer(l.Named(opts.Name))}
+	logName := strings.ToLower(opts.Name)
+	logName = strings.ReplaceAll(logName, " ", "-")
+	l := getLogger().Named(logName)
+	l.Info("Starting " + opts.Name + " service")
+	s := &service{l: l, server: getServer(l.Named("web"))}
 
 	if opts.ProxyTransport != nil {
 		s.server.SetProxyTransport(opts.ProxyTransport)
 	}
 
-	s.slack = alerts.NewSlackClient(l.Named(opts.Name + ":slack"))
-	s.text = alerts.NewTextClient(l.Named(opts.Name + ":text"))
+	s.slack = alerts.NewSlackClient(l.Named("slack"))
+	s.text = alerts.NewTextClient(l.Named("text"))
 
 	if opts.EnableDB {
 		if opts.DBType == DBTypeSqlite {
-			db := getSqliteDB(l.Named(opts.Name + ":db"))
+			db := getSqliteDB(l.Named("db"))
 			s.db = db
 		} else {
-			db := getPsqlDB(l.Named(opts.Name + ":db"))
+			db := getPsqlDB(l.Named("db"))
 			s.db = db
 		}
 	}
 
 	if opts.EnableBus {
-		b := getBus(l.Named(opts.Name + ":queue"))
+		b := getBus(l.Named("queue"))
 		s.bus = b
 	}
 
 	if opts.EnableCache {
-		c := getCache(l.Named(opts.Name + ":cache"))
+		c := getCache(l.Named("cache"))
 		s.cache = c
 	}
 

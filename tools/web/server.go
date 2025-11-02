@@ -51,7 +51,7 @@ func (s *Server) setupRouter() http.Handler {
 
 // NewServer returns a new server object
 func NewServer(opts Options) *Server {
-	socketServer := sockets.New(opts.Logger, opts.WorkerCount)
+	socketServer := sockets.New(opts.Logger.Named("socket"), opts.WorkerCount)
 	s := &Server{
 		addr:         ":" + strconv.Itoa(opts.Port),
 		logger:       opts.Logger,

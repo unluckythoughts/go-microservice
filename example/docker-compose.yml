@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   example-db:
-    image: "postgres:13"
+    image: "postgres:latest"
     hostname: "example-db"
     container_name: "example-db"
     environment:
