@@ -21,7 +21,7 @@ func ExtractHTML(htmlText string, selector string) ([]string, error) {
 
 	var results []string
 	selection.Each(func(i int, s *goquery.Selection) {
-		htmlContent, err := s.Html()
+		htmlContent, err := goquery.OuterHtml(s)
 		if err != nil {
 			return
 		}
