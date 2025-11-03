@@ -8,6 +8,36 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+func ExtractHTML(htmlText string, selector string) ([]string, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlText))
+	if err != nil {
+		return nil, err
+	}
+
+	selection := doc.Find(selector)
+	if selection.Length() == 0 {
+		return nil, fmt.Errorf("no elements found for selector: %s", selector)
+	}
+
+	var results []string
+	selection.Each(func(i int, s *goquery.Selection) {
+		htmlContent, err := s.Html()
+		if err != nil {
+			return
+		}
+		text := strings.TrimSpace(htmlContent)
+		if text != "" {
+			results = append(results, text)
+		}
+	})
+
+	if len(results) == 0 {
+		return nil, fmt.Errorf("no text content found for selector: %s", selector)
+	}
+
+	return results, nil
+}
+
 // ExtractContent retrives content from html text based on css selector
 func ExtractContent(htmlText string, selector string) ([]string, error) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlText))
