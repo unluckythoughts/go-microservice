@@ -60,7 +60,7 @@ func ExtractContent(htmlText string, selector string) ([]string, error) {
 			}
 
 			if attrName == "html" {
-				htmlContent, err := s.Html()
+				htmlContent, err := goquery.OuterHtml(s)
 				if err != nil {
 					return
 				}
