@@ -94,10 +94,23 @@ func (s *Scrapper) createCollector() *colly.Collector {
 	return c
 }
 
-// getURL constructs the full URL based on the base URL and the provided path
-func (s *Scrapper) getFullURL(url string) string {
+// GetFullURL constructs the full URL based on the base URL and the provided path
+func (s *Scrapper) GetFullURL(url string) string {
 	if strings.HasPrefix(url, "/") {
 		return s.config.BaseURL + url
+	}
+
+	return url
+}
+
+// StripBaseURL removes the base URL from the provided URL path
+func (s *Scrapper) StripBaseURL(url string) string {
+	if strings.HasPrefix(url, s.config.BaseURL) {
+		url = strings.TrimPrefix(url, s.config.BaseURL)
+	}
+
+	if !strings.HasPrefix(url, "/") {
+		url = "/" + url
 	}
 
 	return url

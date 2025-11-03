@@ -102,7 +102,7 @@ func (s *Scrapper) setupHandlers(c *colly.Collector, data *ScrapedData) {
 
 // ScrapeURL scrapes a single URL and returns the extracted data
 func (s *Scrapper) ScrapeURL(targetURL string, col *colly.Collector) (*ScrapedData, error) {
-	targetURL = s.getFullURL(targetURL)
+	targetURL = s.GetFullURL(targetURL)
 	s.ctx.Logger().Infow("Starting to scrape URL", "url", targetURL)
 
 	data := &ScrapedData{
