@@ -1,6 +1,7 @@
 package scrapper
 
 import (
+	"net/http"
 	"strings"
 	"time"
 
@@ -25,6 +26,10 @@ type ScrapperConfig struct {
 	Debug bool
 	// Headers to add to requests
 	Headers map[string]string
+	// AllowURLRevisit allows revisiting the same URL multiple times
+	AllowURLRevisit bool
+	// RoundTripper for custom HTTP transport
+	RoundTripper http.RoundTripper
 }
 
 // ScrapedData represents the data scraped from a web page

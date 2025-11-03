@@ -63,6 +63,14 @@ func (s *Scrapper) createCollector() *colly.Collector {
 		c = colly.NewCollector()
 	}
 
+	if s.config.AllowURLRevisit {
+		c.AllowURLRevisit = true
+	}
+
+	if s.config.RoundTripper != nil {
+		c.WithTransport(s.config.RoundTripper)
+	}
+
 	// Configure limits
 	c.Limit(&colly.LimitRule{
 		DomainGlob:  "*",
