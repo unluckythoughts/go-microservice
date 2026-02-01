@@ -233,6 +233,7 @@ Key dependencies include:
 - [ ] Add comprehensive unit tests
 - [ ] Add more examples and documentation
 - [ ] Add metrics and monitoring support
+- [ ] Add scheduler support
 
 ## Contributing
 
