@@ -28,6 +28,7 @@ type (
 		GetBus() bus.IBus
 		GetAlerts() (*alerts.SlackClient, *alerts.TextClient)
 		GetLogger() *zap.Logger
+		GetWorker() *worker.Worker
 	}
 
 	Options struct {
