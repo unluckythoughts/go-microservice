@@ -11,6 +11,7 @@ import (
 	"github.com/unluckythoughts/go-microservice/tools/sockets"
 	"github.com/unluckythoughts/go-microservice/tools/sqlite"
 	"github.com/unluckythoughts/go-microservice/tools/web"
+	"github.com/unluckythoughts/go-microservice/tools/worker"
 	"github.com/unluckythoughts/go-microservice/utils"
 	"github.com/unluckythoughts/go-microservice/utils/alerts"
 	"go.uber.org/zap"
@@ -43,6 +44,7 @@ type (
 		db     *gorm.DB
 		cache  *redis.Client
 		server *web.Server
+		worker *worker.Worker
 		bus    bus.IBus
 		slack  *alerts.SlackClient
 		text   *alerts.TextClient
@@ -58,6 +60,10 @@ func getLogger() *zap.Logger {
 	opts := logger.Options{}
 	utils.ParseEnvironmentVars(&opts)
 	return logger.New(opts)
+}
+
+func getWorker(l *zap.Logger, db *gorm.DB) *worker.Worker {
+	return worker.New(web.NewContext(l.Named("worker")), db)
 }
 
 func getServer(l *zap.Logger) *web.Server {
@@ -105,7 +111,11 @@ func New(opts Options) IService {
 	logName = strings.ReplaceAll(logName, " ", "-")
 	l := getLogger().Named(logName)
 	l.Info("Starting " + opts.Name + " service")
-	s := &service{l: l, server: getServer(l.Named("web"))}
+	s := &service{
+		l:      l,
+		server: getServer(l.Named("web")),
+		worker: getWorker(l.Named("worker"), nil), // New worker will be set later if db enabled
+	}
 
 	if opts.ProxyTransport != nil {
 		s.server.SetProxyTransport(opts.ProxyTransport)
@@ -121,6 +131,8 @@ func New(opts Options) IService {
 		} else {
 			db := getPsqlDB(l.Named("db"))
 			s.db = db
+			// Recreate worker with DB for distributed locking
+			s.worker = getWorker(l.Named("worker"), db)
 		}
 	}
 
@@ -139,6 +151,7 @@ func New(opts Options) IService {
 
 func (s *service) Start() {
 	s.server.Start()
+	s.worker.Start()
 }
 
 func (s *service) HttpRouter() web.Router {
@@ -173,9 +186,14 @@ func (s *service) GetBus() bus.IBus {
 	panic("database is not configured with the service")
 }
 
+func (s *service) GetWorker() *worker.Worker {
+	return s.worker
+}
+
 func (s *service) GetAlerts() (*alerts.SlackClient, *alerts.TextClient) {
 	return s.slack, s.text
 }
+
 func (s *service) GetLogger() *zap.Logger {
 	return s.l
 }

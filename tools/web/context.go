@@ -19,19 +19,45 @@ type Context interface {
 	SetSession(session *sessions.Session)
 	GetSessionValue(key string) (any, error)
 	PutSessionValue(key string, value any) error
+	Cancel()
+	WithTimeout(duration time.Duration) Context
 }
 
 type ctx struct {
 	context.Context
-	st time.Time
-	l  *zap.Logger
+	st     time.Time
+	l      *zap.Logger
+	cancel context.CancelFunc
+}
+
+func IsWebContext(c context.Context) (Context, bool) {
+	ctx, ok := c.(Context)
+	return ctx, ok
 }
 
 func NewContext(l *zap.Logger) *ctx {
+	c, cancel := context.WithCancel(context.Background())
 	return &ctx{
 		st:      time.Now(),
 		l:       l,
-		Context: context.Background(),
+		Context: c,
+		cancel:  cancel,
+	}
+}
+
+func (c *ctx) WithTimeout(duration time.Duration) Context {
+	contextWithTimeout, cancel := context.WithTimeout(c.Context, duration)
+	return &ctx{
+		Context: contextWithTimeout,
+		st:      c.st,
+		l:       c.l,
+		cancel:  cancel,
+	}
+}
+
+func (c *ctx) Cancel() {
+	if c.cancel != nil {
+		c.cancel()
 	}
 }
 
