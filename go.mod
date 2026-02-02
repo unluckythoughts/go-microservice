@@ -13,6 +13,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/pkg/errors v0.9.1
+	github.com/robfig/cron/v3 v3.0.1
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.38.0
 	golang.org/x/net v0.40.0
@@ -37,7 +38,6 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
