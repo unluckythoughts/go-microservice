@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/unluckythoughts/go-microservice/tools/web"
-	"github.com/unluckythoughts/go-microservice/utils"
+	"github.com/unluckythoughts/go-microservice/v2/tools/web"
+	"github.com/unluckythoughts/go-microservice/v2/utils"
 )
 
 func (a *Auth) LoginHandler(r web.Request) (any, error) {

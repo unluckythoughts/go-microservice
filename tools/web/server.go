@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/unluckythoughts/go-microservice/tools/sockets"
+	"github.com/unluckythoughts/go-microservice/v2/tools/sockets"
 	"go.uber.org/zap"
 )
 

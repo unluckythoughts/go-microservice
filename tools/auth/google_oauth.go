@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/unluckythoughts/go-microservice/tools/web"
+	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 )
 
 // getFirstKey returns the first key from a map

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gobwas/ws"
-	"github.com/unluckythoughts/go-microservice/tools/sockets"
+	"github.com/unluckythoughts/go-microservice/v2/tools/sockets"
 )
 
 func (s *Server) upgradeConnection(

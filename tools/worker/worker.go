@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/robfig/cron/v3"
-	"github.com/unluckythoughts/go-microservice/tools/web"
+	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )

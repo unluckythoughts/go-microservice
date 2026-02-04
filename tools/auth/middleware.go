@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/unluckythoughts/go-microservice/tools/web"
+	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 )
 
 func (a *Auth) getAuthResponse(ctx web.Context, user *User) (LoginResponse, error) {

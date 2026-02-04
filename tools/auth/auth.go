@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/unluckythoughts/go-microservice/utils"
+	"github.com/unluckythoughts/go-microservice/v2/utils"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
