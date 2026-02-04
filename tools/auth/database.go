@@ -2,25 +2,93 @@ package auth
 
 import (
 	"errors"
-	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 	"github.com/unluckythoughts/go-microservice/v2/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
+
+func (a *Auth) CreateVerifyToken(target string) error {
+	var token string
+	var err error
+
+	for {
+		token, err = utils.GenerateRandomString(8)
+		if err != nil {
+			return err
+		}
+
+		var v Verify
+		if err := a.db.Where("token = ?", token).First(&v).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				// No existing token for this target, we can proceed to create a new one
+				break
+			}
+
+			return err
+		}
+	}
+
+	verify := &Verify{
+		Target:    target,
+		Token:     token,
+		Verified:  false,
+		ExpiresAt: time.Now().Add(time.Hour),
+	}
+
+	return a.db.
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "target"}},
+			DoUpdates: clause.AssignmentColumns([]string{"token", "verified", "expires_at"}),
+		}).
+		Create(verify).Error
+}
+
+func (a *Auth) GetVerification(token string) (*Verify, error) {
+	var verify Verify
+	err := a.db.Where("token = ?", token).First(&verify).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &verify, nil
+}
+
+func (a *Auth) IsVerified(target string) bool {
+	var verify Verify
+	err := a.db.Where("target = ?", target).First(&verify).Error
+	if err != nil {
+		return false
+	}
+
+	return verify.Verified
+}
+
+func (a *Auth) VerifyToken(target string, token string) (bool, error) {
+	var verify Verify
+	err := a.db.
+		Where("target = ? AND token = ?", target, token).
+		First(&verify).Error
+	if err != nil {
+		return false, err
+	}
+
+	if verify.ExpiresAt.Before(time.Now()) {
+		return false, ErrExpiredToken
+	}
+
+	verify.Verified = true
+	err = a.db.Save(&verify).Error
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
 
 // CreateUser creates a new user with hashed password
 func (a *Auth) CreateUser(user *User) error {
-	// Generate a unique random 16 character verify token
-	token, err := utils.GenerateRandomString(16)
-	if err != nil {
-		return err
-	}
-	user.VerifyToken = token
-	user.TokenExpiresAt = time.Now().Add(24 * time.Hour) // Token valid for 24 hours
-
 	// Hash the password before saving
 	if user.Password != "" {
 		hashedPassword, err := utils.GetHash(user.Password)
@@ -43,7 +111,7 @@ func (a *Auth) GetUserByID(id uint) (*User, error) {
 		return nil, err
 	}
 
-	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
+	utils.ClearValues(&user, "Password", "GoogleID")
 	return &user, nil
 }
 
@@ -57,7 +125,7 @@ func (a *Auth) GetUserByEmail(email string) (*User, error) {
 		}
 		return nil, err
 	}
-	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
+	utils.ClearValues(&user, "Password", "GoogleID")
 	return &user, nil
 }
 
@@ -71,7 +139,7 @@ func (a *Auth) GetUserByMobile(mobile string) (*User, error) {
 		}
 		return nil, err
 	}
-	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
+	utils.ClearValues(&user, "Password", "GoogleID")
 	return &user, nil
 }
 
@@ -79,7 +147,7 @@ func (a *Auth) GetUserByMobile(mobile string) (*User, error) {
 func (a *Auth) GetAllUsers(offset, limit int) ([]User, error) {
 	var users []User
 	err := a.db.Preload("Addresses").Offset(offset).Limit(limit).Find(&users).Error
-	utils.ClearValues(&users, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
+	utils.ClearValues(&users, "Password", "GoogleID")
 	return users, err
 }
 
@@ -123,7 +191,7 @@ func (a *Auth) UpdateMobileVerified(id uint, verified bool) error {
 // UpdateUserPartial updates specific fields of a user
 func (a *Auth) UpdateUserPartial(id uint, updates any) error {
 	filteredUpdates := make(map[string]any)
-	utils.FilterDBUpdates(updates, &filteredUpdates, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
+	utils.FilterDBUpdates(updates, &filteredUpdates, "Password", "GoogleID")
 	result := a.db.Model(&User{}).Where("id = ?", id).Updates(filteredUpdates)
 	if result.Error != nil {
 		return result.Error
@@ -194,51 +262,7 @@ func (a *Auth) GetUserByGoogleID(googleID string) (*User, error) {
 		}
 		return nil, err
 	}
-	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
-	return &user, nil
-}
-
-// UpdateUserVerifyToken updates the verification token for a user
-func (a *Auth) UpdateUserVerifyToken(id uint, token string) error {
-	updates := map[string]interface{}{
-		"verify_token":     token,
-		"token_expires_at": time.Now().Add(24 * time.Hour), // Token valid for 24 hours
-	}
-	result := a.db.Model(&User{}).Where("id = ?", id).Updates(updates)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return errors.New("user not found")
-	}
-	return nil
-}
-
-// ClearUserVerifyToken clears the verification token for a user
-func (a *Auth) ClearUserVerifyToken(id uint) error {
-	result := a.db.Model(&User{}).Where("id = ?", id).Update("verify_token", "")
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return errors.New("user not found")
-	}
-	return nil
-}
-
-// GetUserByVerifyToken retrieves a user by verification token
-func (a *Auth) VerifyUserToken(token string) (*User, error) {
-	var user User
-	err := a.db.Where("verify_token = ? AND verify_token != ''", token).First(&user).Error
-	if err != nil {
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid verify token: %w", err))
-	}
-
-	if user.TokenExpiresAt.Before(time.Now()) {
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("token has expired"))
-	}
-
-	utils.ClearValues(&user, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
+	utils.ClearValues(&user, "Password", "GoogleID")
 	return &user, nil
 }
 

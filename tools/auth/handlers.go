@@ -1,13 +1,17 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/unluckythoughts/go-microservice/v2/tools/web"
-	"github.com/unluckythoughts/go-microservice/v2/utils"
+	"gorm.io/gorm"
 )
 
+// LoginHandler handles user login requests
+// example path: POST .../login
 func (a *Auth) LoginHandler(r web.Request) (any, error) {
 	details := Credentials{}
 	err := r.GetValidatedBody(&details)
@@ -42,20 +46,53 @@ func (a *Auth) LoginHandler(r web.Request) (any, error) {
 	return a.getAuthResponse(r.GetContext(), user)
 }
 
-func (a *Auth) GetRoleUserRegister(role UserRole) web.Handler {
+// CreateVerifyHandler handles the creation of a verification token for a given target (email or mobile)
+// example path: POST .../verify/:target
+func (a *Auth) CreateVerifyHandler(r web.Request) (any, error) {
+	target := r.GetRouteParam("target")
+
+	if target == "" {
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("target is required"))
+	}
+
+	return nil, a.CreateVerifyToken(target)
+}
+
+// VerifyTokenHandler handles the verification of a token for a given target (email or mobile)
+// example path: GET .../verify/:target/:token
+func (a *Auth) VerifyTokenHandler(r web.Request) (any, error) {
+	target := r.GetRouteParam("target")
+	token := r.GetRouteParam("token")
+
+	if token == "" {
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("verification token is required"))
+	}
+
+	ok, err := a.VerifyToken(target, token)
+	if err != nil {
+		if errors.Is(err, ErrExpiredToken) {
+			return nil, web.NewError(http.StatusBadRequest, err)
+		} else if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid verification token"))
+		}
+		return nil, web.NewError(http.StatusInternalServerError, err)
+	}
+
+	return ok, nil
+}
+
+// GetRegisterHandlerForUserRole returns a handler for user registration with a specific role
+// example path: POST .../register
+func (a *Auth) GetRegisterHandlerForUserRole(role UserRole) web.Handler {
 	return func(r web.Request) (any, error) {
 		details := RegisterRequest{}
 		err := r.GetValidatedBody(&details)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		if details.Email == "" && details.Mobile == "" {
-			return "", web.NewError(http.StatusBadRequest, fmt.Errorf("email or mobile is required"))
-		}
-
-		if !IsValidPassword(details.Password) {
-			return "", web.NewError(http.StatusBadRequest, fmt.Errorf("password must be at least 10 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character"))
+			return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("email or mobile is required"))
 		}
 
 		user := User{
@@ -66,33 +103,45 @@ func (a *Auth) GetRoleUserRegister(role UserRole) web.Handler {
 		}
 
 		if details.Mobile != "" {
-			var mobile Mobile
-			err := mobile.Set(details.Mobile)
+			err := user.Mobile.Set(details.Mobile)
 			if err != nil {
-				return "", web.NewError(http.StatusBadRequest, fmt.Errorf("invalid mobile number: %w", err))
+				return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid mobile number: %w", err))
 			}
-			user.Mobile = mobile
+		}
+
+		if user.Email != "" && a.IsVerified(user.Email) {
+			user.EmailVerified = true
+		}
+
+		if user.Mobile.String() != "" && a.IsVerified(user.Mobile.String()) {
+			user.MobileVerified = true
 		}
 
 		err = a.CreateUser(&user)
 		if err != nil {
-			return "", err
+			return nil, web.NewError(http.StatusInternalServerError, err)
 		}
 
 		return "user registered successfully", nil
 	}
 }
 
+// LogoutHandler handles user logout requests
+// example path: POST .../logout
 func (a *Auth) LogoutHandler(r web.Request) (any, error) {
 	// Implement logout logic here
 	// This could involve clearing session data or tokens
 	return "logout successful", nil
 }
 
+// GetUser returns the currently authenticated user
+// example path: GET .../me
 func (a *Auth) GetUser(r web.Request) (*User, error) {
 	return GetAuthenticatedUser(r)
 }
 
+// UpdateUserHandler handles user profile update requests
+// example path: PUT .../me
 func (a *Auth) UpdateUserHandler(r web.Request) (any, error) {
 	user, err := GetAuthenticatedUser(r)
 	if err != nil {
@@ -127,6 +176,8 @@ func (a *Auth) UpdateUserHandler(r web.Request) (any, error) {
 	return "user updated successfully", nil
 }
 
+// ChangePasswordHandler handles password change requests for authenticated users
+// example path: POST .../change-password
 func (a *Auth) ChangePasswordHandler(r web.Request) (any, error) {
 	user, err := GetAuthenticatedUser(r)
 	if err != nil {
@@ -151,87 +202,65 @@ func (a *Auth) ChangePasswordHandler(r web.Request) (any, error) {
 	return "password changed successfully", nil
 }
 
-func (a *Auth) VerifyHandler(r web.Request) (any, error) {
-	token := r.GetRouteParam("token")
-
-	if token == "" {
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("verification token is required"))
+func getResetTarget(user *User) (string, error) {
+	if user.Email != "" {
+		return user.Email + ":email-reset-password", nil
 	}
 
-	user, err := a.VerifyUserToken(token)
-	if err != nil {
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid verification token: %w", err))
+	if user.Mobile.String() != "" {
+		return user.Mobile.String() + ":mobile-reset-password", nil
 	}
 
-	if !user.EmailVerified && user.Email != "" {
-		err := a.UpdateEmailVerified(user.ID, true)
-		if err != nil {
-			return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("failed to verify email: %w", err))
-		}
-	} else if !user.MobileVerified && user.Mobile != "" {
-		err := a.UpdateMobileVerified(user.ID, true)
-		if err != nil {
-			return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("failed to verify mobile: %w", err))
-		}
-	}
-
-	return "verification successful", nil
+	return "", fmt.Errorf("user has neither email nor mobile")
 }
 
+func (a *Auth) getTarget(target string) (string, bool) {
+	if target == "" {
+		return "", false
+	}
+
+	vals := strings.Split(target, ":")
+	if len(vals) < 2 {
+		return "", false
+	}
+
+	switch vals[len(vals)-1] {
+	case "email-reset-password", "mobile-reset-password":
+		return strings.Join(vals[:len(vals)-1], ":"), true
+	}
+
+	return "", false
+}
+
+// UpdatePasswordHandler handles password reset requests using a verification token
+// example path: POST .../update-password
 func (a *Auth) UpdatePasswordHandler(r web.Request) (any, error) {
 	body := UpdatePasswordRequest{}
 	err := r.GetValidatedBody(&body)
 	if err != nil {
 		return nil, err
 	}
-	if body.VerifyToken == "" || body.NewPassword == "" {
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("verify token and new password are required"))
+
+	v, err := a.GetVerification(body.VerifyToken)
+	if err != nil {
+		return nil, err
 	}
 
-	if !IsValidPassword(body.NewPassword) {
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("new password must be at least 10 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character"))
+	target, ok := a.getTarget(v.Target)
+	if !ok {
+		return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("invalid verification target"))
 	}
 
-	_, err = a.VerifyUserToken(body.VerifyToken)
+	var user User
+	err = a.db.Where("email = ? OR mobile = ?", target, target).First(&user).Error
+	if err != nil {
+		return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("user not found for the given verification token"))
+	}
+
+	err = a.UpdateUserPassword(user.ID, body.NewPassword)
 	if err != nil {
 		return nil, err
 	}
 
 	return "password reset successful", nil
-}
-
-func (a *Auth) SendVerificationHandler(r web.Request) (any, error) {
-	body := SendVerificationRequest{}
-	err := r.GetValidatedBody(&body)
-	if err != nil {
-		return nil, err
-	}
-
-	var user *User
-	if body.Email != "" {
-		user, err = a.GetUserByEmail(body.Email)
-	} else if body.Mobile != "" {
-		user, err = a.GetUserByMobile(body.Mobile)
-	}
-
-	if err != nil {
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("failed to find user: %w", err))
-	} else if user == nil {
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("user not found"))
-	}
-
-	token, err := utils.GenerateRandomString(16)
-	if err != nil {
-		return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("failed to generate verification token: %w", err))
-	}
-
-	err = a.UpdateUserVerifyToken(user.ID, token)
-	if err != nil {
-		return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("failed to update verification token: %w", err))
-	}
-
-	// TODO: Send verification email or SMS
-	// This could involve using an email service or SMS gateway to send the token to the user
-
-	return "verification sent successfully", nil
 }
