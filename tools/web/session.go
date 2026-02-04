@@ -1,11 +1,11 @@
 package web
 
 import (
-	"crypto/rand"
 	"encoding/base64"
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	"github.com/unluckythoughts/go-microservice/utils"
 	"go.uber.org/zap"
 )
 
@@ -65,28 +65,18 @@ func (s *sessionStore) Save(req *http.Request, resp http.ResponseWriter, value *
 	return s.store.Save(req, resp, value)
 }
 
-// generateRandomKey generates a random 32-byte key for session encryption
-func generateRandomKey() ([]byte, error) {
-	key := make([]byte, 32)
-	_, err := rand.Read(key)
-	if err != nil {
-		return nil, err
-	}
-	return key, nil
-}
-
 // NewSessionStore creates a new session store with the given options
 func NewSessionStore(opts SessionOptions) SessionStore {
 	var secretKey []byte
-	var err error
 
 	if opts.SecretKey != "" {
 		secretKey = []byte(opts.SecretKey)
 	} else {
-		secretKey, err = generateRandomKey()
+		strKey, err := utils.GenerateRandomString(32)
 		if err != nil {
 			panic(err)
 		}
+		secretKey = []byte(strKey)
 		opts.Logger.Info("Generated random session secret key", zap.String("key", base64.StdEncoding.EncodeToString(secretKey)))
 	}
 
