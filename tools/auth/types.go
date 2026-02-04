@@ -69,9 +69,9 @@ func (m *Mobile) GetNumber() (string, bool) {
 	return "", false
 }
 
-// UserRole represents the role of a user in the application
-type UserRole uint
+// Role represents the role of a user in the application
+type Role uint
 
-func (r *UserRole) Value() string {
+func (r *Role) Value() string {
 	return fmt.Sprintf("%d", r)
 }

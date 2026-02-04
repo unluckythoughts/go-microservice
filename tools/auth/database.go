@@ -9,14 +9,14 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (a *Auth) CreateVerifyToken(target string) error {
+func (a *Auth) CreateVerifyToken(target string) (string, error) {
 	var token string
 	var err error
 
 	for {
 		token, err = utils.GenerateRandomString(8)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		var v Verify
@@ -26,7 +26,7 @@ func (a *Auth) CreateVerifyToken(target string) error {
 				break
 			}
 
-			return err
+			return "", err
 		}
 	}
 
@@ -37,12 +37,17 @@ func (a *Auth) CreateVerifyToken(target string) error {
 		ExpiresAt: time.Now().Add(time.Hour),
 	}
 
-	return a.db.
+	err = a.db.
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "target"}},
 			DoUpdates: clause.AssignmentColumns([]string{"token", "verified", "expires_at"}),
 		}).
 		Create(verify).Error
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 func (a *Auth) GetVerification(token string) (*Verify, error) {

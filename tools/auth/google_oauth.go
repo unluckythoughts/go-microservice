@@ -10,7 +10,7 @@ import (
 )
 
 // getFirstKey returns the first key from a map
-func getFirstKey(m map[UserRole]string) UserRole {
+func getFirstKey(m map[Role]string) Role {
 	for key := range m {
 		return key
 	}

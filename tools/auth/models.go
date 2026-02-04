@@ -9,13 +9,13 @@ import (
 
 type User struct {
 	gorm.Model
-	Name           string   `gorm:"column:name;not null" json:"name"`
-	Email          string   `gorm:"column:email;not null;uniqueIndex" json:"email"`
-	EmailVerified  bool     `gorm:"column:email_verified;not null;default:false" json:"email_verified"`
-	Mobile         Mobile   `gorm:"column:mobile;uniqueIndex" json:"mobile,omitempty"`
-	MobileVerified bool     `gorm:"column:mobile_verified;not null;default:false" json:"mobile_verified"`
-	Password       string   `gorm:"column:password;not null" json:"-"`
-	Role           UserRole `gorm:"column:role;type:int;not null;default:1" json:"role"`
+	Name           string `gorm:"column:name;not null" json:"name"`
+	Email          string `gorm:"column:email;not null;uniqueIndex" json:"email"`
+	EmailVerified  bool   `gorm:"column:email_verified;not null;default:false" json:"email_verified"`
+	Mobile         Mobile `gorm:"column:mobile;uniqueIndex" json:"mobile,omitempty"`
+	MobileVerified bool   `gorm:"column:mobile_verified;not null;default:false" json:"mobile_verified"`
+	Password       string `gorm:"column:password;not null" json:"-"`
+	Role           Role   `gorm:"column:role;type:int;not null;default:1" json:"role"`
 	// Google OAuth fields
 	GoogleID     string `gorm:"column:google_id" json:"-"`
 	GoogleAvatar string `gorm:"column:google_avatar" json:"google_avatar,omitempty"`

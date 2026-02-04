@@ -17,9 +17,9 @@ type Auth struct {
 	ignoreRoutes []string
 	jwtKey       string
 	tokenValid   time.Duration
-	// Roles are defined as a map where the key is UserRole and the value is the role name
-	// Higher value UserRoles have more privileges and can access all resources of lower value UserRoles
-	userRoles                map[UserRole]string
+	// Roles are defined as a map where the key is Role and the value is the role name
+	// Higher value Roles have more privileges and can access all resources of lower value Roles
+	userRoles                map[Role]string
 	defaultMobileCountryCode string
 	GoogleOauthConfig        oauth2.Config
 }
@@ -41,9 +41,9 @@ type Options struct {
 	// e.g. /api/v1/auth/login,/api/v1/auth/register
 	IgnoreRoutes []string
 	// Roles are defined as a map where the key is UserRole(uint) and the value is the role name.
-	// Higher UserRole(uint) has more privileges and can access all resources of lower UserRole(uint).
+	// Higher Role has more privileges and can access all resources of lower Role.
 	// Default roles are 0:user, 99:admin
-	UserRoles map[UserRole]string
+	UserRoles map[Role]string
 	// Default Mobile country code for new users
 	DefaultMobileCountryCode string `env:"AUTH_DEFAULT_MOBILE_COUNTRY_CODE" envDefault:"+1"`
 
@@ -105,7 +105,7 @@ func NewAuthService(override Options) *Auth {
 	}
 
 	if len(opts.UserRoles) == 0 {
-		opts.UserRoles = map[UserRole]string{
+		opts.UserRoles = map[Role]string{
 			0:  "user",
 			99: "admin",
 		}
@@ -128,8 +128,8 @@ func NewAuthService(override Options) *Auth {
 	return a
 }
 
-// RoleName returns the name of the role for the given UserRole
-func (a *Auth) RoleName(role UserRole) string {
+// RoleName returns the name of the role for the given Role
+func (a *Auth) RoleName(role Role) string {
 	return a.userRoles[role]
 }
 
@@ -156,7 +156,7 @@ func (a *Auth) FormatMobileNumber(mobile string) string {
 }
 
 // GetUserRoles returns the map of user roles defined in the Auth.
-// It does not take any input parameters and returns a map where the key is UserRole and the value is the role name.
-func (a *Auth) GetUserRoles() map[UserRole]string {
+// It does not take any input parameters and returns a map where the key is Role and the value is the role name.
+func (a *Auth) GetUserRoles() map[Role]string {
 	return a.userRoles
 }

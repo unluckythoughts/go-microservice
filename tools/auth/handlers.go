@@ -46,16 +46,34 @@ func (a *Auth) LoginHandler(r web.Request) (any, error) {
 	return a.getAuthResponse(r.GetContext(), user)
 }
 
-// CreateVerifyHandler handles the creation of a verification token for a given target (email or mobile)
-// example path: POST .../verify/:target
-func (a *Auth) CreateVerifyHandler(r web.Request) (any, error) {
+// SendTokenHandler handles the creation of a verification token for a given target (email or mobile)
+// example path: PATCH .../verify/:target?type=(email or mobile)
+func (a *Auth) SendTokenHandler(r web.Request) (any, error) {
+	targetType := r.GetURLParam("type")
 	target := r.GetRouteParam("target")
 
 	if target == "" {
 		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("target is required"))
 	}
 
-	return nil, a.CreateVerifyToken(target)
+	token, err := a.CreateVerifyToken(target)
+	if err != nil {
+		return nil, web.NewError(http.StatusInternalServerError, err)
+	}
+
+	switch targetType {
+	case "email", "":
+		r.GetContext().Logger().Info("verification token created for email", "email", target, "token", token)
+		// TODO: send verification email to the user with the token
+	case "mobile":
+		r.GetContext().Logger().Info("verification token created for mobile", "mobile", target, "token", token)
+		// TODO: send verification SMS to the user with the token
+	default:
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid target type: must be 'email' or 'mobile'"))
+	}
+
+	return "verification token created successfully", nil
+
 }
 
 // VerifyTokenHandler handles the verification of a token for a given target (email or mobile)
@@ -83,7 +101,7 @@ func (a *Auth) VerifyTokenHandler(r web.Request) (any, error) {
 
 // GetRegisterHandlerForUserRole returns a handler for user registration with a specific role
 // example path: POST .../register
-func (a *Auth) GetRegisterHandlerForUserRole(role UserRole) web.Handler {
+func (a *Auth) GetRegisterHandlerForUserRole(role Role) web.Handler {
 	return func(r web.Request) (any, error) {
 		details := RegisterRequest{}
 		err := r.GetValidatedBody(&details)
@@ -129,8 +147,7 @@ func (a *Auth) GetRegisterHandlerForUserRole(role UserRole) web.Handler {
 // LogoutHandler handles user logout requests
 // example path: POST .../logout
 func (a *Auth) LogoutHandler(r web.Request) (any, error) {
-	// Implement logout logic here
-	// This could involve clearing session data or tokens
+	// TODO: clear session data or tokens
 	return "logout successful", nil
 }
 
@@ -202,16 +219,24 @@ func (a *Auth) ChangePasswordHandler(r web.Request) (any, error) {
 	return "password changed successfully", nil
 }
 
-func getResetTarget(user *User) (string, error) {
+func getResetTarget(user *User, targetType string) (string, string, error) {
+	if targetType == "email" && user.Email != "" {
+		return user.Email + ":email-reset-password", "email", nil
+	}
+
+	if targetType == "mobile" && user.Mobile.String() != "" {
+		return user.Mobile.String() + ":mobile-reset-password", "mobile", nil
+	}
+
 	if user.Email != "" {
-		return user.Email + ":email-reset-password", nil
+		return user.Email + ":email-reset-password", "email", nil
 	}
 
 	if user.Mobile.String() != "" {
-		return user.Mobile.String() + ":mobile-reset-password", nil
+		return user.Mobile.String() + ":mobile-reset-password", "mobile", nil
 	}
 
-	return "", fmt.Errorf("user has neither email nor mobile")
+	return "", "", fmt.Errorf("user has neither email nor mobile")
 }
 
 func (a *Auth) getTarget(target string) (string, bool) {
@@ -230,6 +255,50 @@ func (a *Auth) getTarget(target string) (string, bool) {
 	}
 
 	return "", false
+}
+
+// ResetPasswordHandler handles password reset requests
+// example path: GET .../reset-password/:target?type=(email or mobile)
+func (a *Auth) ResetPasswordHandler(r web.Request) (any, error) {
+	targetType := r.GetURLParam("type")
+	target := r.GetRouteParam("target")
+
+	if target == "" {
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("target is required"))
+	}
+
+	var user User
+	err := a.db.Where("email = ? OR mobile = ?", target, target).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("user not found for the given target"))
+		}
+		return nil, web.NewError(http.StatusInternalServerError, err)
+	}
+
+	target, targetType, err = getResetTarget(&user, targetType)
+	if err != nil {
+		return nil, web.NewError(http.StatusInternalServerError, err)
+	}
+
+	token, err := a.CreateVerifyToken(target)
+	if err != nil {
+		return nil, web.NewError(http.StatusInternalServerError, err)
+	}
+
+	switch targetType {
+	case "email", "":
+		r.GetContext().Logger().Info("verification token created for email", "email", target, "token", token)
+		// TODO: send verification email to the user with the token
+	case "mobile":
+		r.GetContext().Logger().Info("verification token created for mobile", "mobile", target, "token", token)
+		// TODO: send verification SMS to the user with the token
+	default:
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid target type: must be 'email' or 'mobile'"))
+	}
+
+	return "verification token created successfully", nil
+
 }
 
 // UpdatePasswordHandler handles password reset requests using a verification token
