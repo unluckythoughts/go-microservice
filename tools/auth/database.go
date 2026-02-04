@@ -12,7 +12,7 @@ import (
 )
 
 // CreateUser creates a new user with hashed password
-func (a *Service) CreateUser(user *User) error {
+func (a *Auth) CreateUser(user *User) error {
 	// Generate a unique random 16 character verify token
 	token, err := utils.GenerateRandomString(16)
 	if err != nil {
@@ -33,7 +33,7 @@ func (a *Service) CreateUser(user *User) error {
 }
 
 // GetUserByID retrieves a user by ID with their addresses
-func (a *Service) GetUserByID(id uint) (*User, error) {
+func (a *Auth) GetUserByID(id uint) (*User, error) {
 	var user User
 	err := a.db.Preload("Addresses").First(&user, id).Error
 	if err != nil {
@@ -48,7 +48,7 @@ func (a *Service) GetUserByID(id uint) (*User, error) {
 }
 
 // GetUserByEmail retrieves a user by email
-func (a *Service) GetUserByEmail(email string) (*User, error) {
+func (a *Auth) GetUserByEmail(email string) (*User, error) {
 	var user User
 	err := a.db.Preload("Addresses").Where("email = ?", email).First(&user).Error
 	if err != nil {
@@ -62,7 +62,7 @@ func (a *Service) GetUserByEmail(email string) (*User, error) {
 }
 
 // GetUserByMobile retrieves a user by mobile number
-func (a *Service) GetUserByMobile(mobile string) (*User, error) {
+func (a *Auth) GetUserByMobile(mobile string) (*User, error) {
 	var user User
 	err := a.db.Preload("Addresses").Where("mobile = ?", mobile).First(&user).Error
 	if err != nil {
@@ -76,7 +76,7 @@ func (a *Service) GetUserByMobile(mobile string) (*User, error) {
 }
 
 // GetAllUsers retrieves all users with pagination
-func (a *Service) GetAllUsers(offset, limit int) ([]User, error) {
+func (a *Auth) GetAllUsers(offset, limit int) ([]User, error) {
 	var users []User
 	err := a.db.Preload("Addresses").Offset(offset).Limit(limit).Find(&users).Error
 	utils.ClearValues(&users, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
@@ -84,7 +84,7 @@ func (a *Service) GetAllUsers(offset, limit int) ([]User, error) {
 }
 
 // UpdateUser updates an existing user with password hashing if needed
-func (a *Service) UpdateUser(user *User) error {
+func (a *Auth) UpdateUser(user *User) error {
 	// Hash the password if it's being updated and not empty
 	if user.Password != "" {
 		hashedPassword, err := utils.GetHash(user.Password)
@@ -97,7 +97,7 @@ func (a *Service) UpdateUser(user *User) error {
 }
 
 // UpdateEmailVerified updates the email_verified field for a user
-func (a *Service) UpdateEmailVerified(id uint, verified bool) error {
+func (a *Auth) UpdateEmailVerified(id uint, verified bool) error {
 	result := a.db.Model(&User{}).Where("id = ?", id).Update("email_verified", verified)
 	if result.Error != nil {
 		return result.Error
@@ -109,7 +109,7 @@ func (a *Service) UpdateEmailVerified(id uint, verified bool) error {
 }
 
 // UpdateMobileVerified updates the mobile_verified field for a user
-func (a *Service) UpdateMobileVerified(id uint, verified bool) error {
+func (a *Auth) UpdateMobileVerified(id uint, verified bool) error {
 	result := a.db.Model(&User{}).Where("id = ?", id).Update("mobile_verified", verified)
 	if result.Error != nil {
 		return result.Error
@@ -121,7 +121,7 @@ func (a *Service) UpdateMobileVerified(id uint, verified bool) error {
 }
 
 // UpdateUserPartial updates specific fields of a user
-func (a *Service) UpdateUserPartial(id uint, updates any) error {
+func (a *Auth) UpdateUserPartial(id uint, updates any) error {
 	filteredUpdates := make(map[string]any)
 	utils.FilterDBUpdates(updates, &filteredUpdates, "Password", "VerifyToken", "TokenExpiresAt", "GoogleID")
 	result := a.db.Model(&User{}).Where("id = ?", id).Updates(filteredUpdates)
@@ -135,7 +135,7 @@ func (a *Service) UpdateUserPartial(id uint, updates any) error {
 }
 
 // DeleteUser soft deletes a user
-func (a *Service) DeleteUser(id uint) error {
+func (a *Auth) DeleteUser(id uint) error {
 	result := a.db.Delete(&User{}, id)
 	if result.Error != nil {
 		return result.Error
@@ -147,7 +147,7 @@ func (a *Service) DeleteUser(id uint) error {
 }
 
 // HardDeleteUser permanently deletes a user and all related data
-func (a *Service) HardDeleteUser(id uint) error {
+func (a *Auth) HardDeleteUser(id uint) error {
 	// First delete related addresses
 	if err := a.db.Unscoped().Where("user_id = ?", id).Error; err != nil {
 		return err
@@ -165,27 +165,27 @@ func (a *Service) HardDeleteUser(id uint) error {
 }
 
 // CountUsers returns the total number of users
-func (a *Service) CountUsers() (int64, error) {
+func (a *Auth) CountUsers() (int64, error) {
 	var count int64
 	err := a.db.Model(&User{}).Count(&count).Error
 	return count, err
 }
 
 // UserExists checks if a user exists by ID
-func (a *Service) UserExists(id uint) (bool, error) {
+func (a *Auth) UserExists(id uint) (bool, error) {
 	var count int64
 	err := a.db.Model(&User{}).Where("id = ?", id).Count(&count).Error
 	return count > 0, err
 }
 
 // EmailExists checks if an email is already taken
-func (a *Service) EmailExists(email string) (bool, error) {
+func (a *Auth) EmailExists(email string) (bool, error) {
 	var count int64
 	err := a.db.Model(&User{}).Where("email = ?", email).Count(&count).Error
 	return count > 0, err
 }
 
-func (a *Service) GetUserByGoogleID(googleID string) (*User, error) {
+func (a *Auth) GetUserByGoogleID(googleID string) (*User, error) {
 	var user User
 	err := a.db.Where("google_id = ?", googleID).First(&user).Error
 	if err != nil {
@@ -199,7 +199,7 @@ func (a *Service) GetUserByGoogleID(googleID string) (*User, error) {
 }
 
 // UpdateUserVerifyToken updates the verification token for a user
-func (a *Service) UpdateUserVerifyToken(id uint, token string) error {
+func (a *Auth) UpdateUserVerifyToken(id uint, token string) error {
 	updates := map[string]interface{}{
 		"verify_token":     token,
 		"token_expires_at": time.Now().Add(24 * time.Hour), // Token valid for 24 hours
@@ -215,7 +215,7 @@ func (a *Service) UpdateUserVerifyToken(id uint, token string) error {
 }
 
 // ClearUserVerifyToken clears the verification token for a user
-func (a *Service) ClearUserVerifyToken(id uint) error {
+func (a *Auth) ClearUserVerifyToken(id uint) error {
 	result := a.db.Model(&User{}).Where("id = ?", id).Update("verify_token", "")
 	if result.Error != nil {
 		return result.Error
@@ -227,7 +227,7 @@ func (a *Service) ClearUserVerifyToken(id uint) error {
 }
 
 // GetUserByVerifyToken retrieves a user by verification token
-func (a *Service) VerifyUserToken(token string) (*User, error) {
+func (a *Auth) VerifyUserToken(token string) (*User, error) {
 	var user User
 	err := a.db.Where("verify_token = ? AND verify_token != ''", token).First(&user).Error
 	if err != nil {
@@ -244,7 +244,7 @@ func (a *Service) VerifyUserToken(token string) (*User, error) {
 
 // Password-related functions
 // UpdateUserPassword updates the password for a user
-func (a *Service) UpdateUserPassword(userID uint, newPassword string) error {
+func (a *Auth) UpdateUserPassword(userID uint, newPassword string) error {
 	// Hash the new password
 	hashedPassword, err := utils.GetHash(newPassword)
 	if err != nil {
@@ -262,7 +262,7 @@ func (a *Service) UpdateUserPassword(userID uint, newPassword string) error {
 }
 
 // VerifyUserPassword verifies a user's password
-func (a *Service) VerifyUserPassword(userID uint, password string) (bool, error) {
+func (a *Auth) VerifyUserPassword(userID uint, password string) (bool, error) {
 	var user User
 	err := a.db.Select("password").First(&user, userID).Error
 	if err != nil {
@@ -276,7 +276,7 @@ func (a *Service) VerifyUserPassword(userID uint, password string) (bool, error)
 }
 
 // VerifyUserPasswordByEmail verifies a user's password by email
-func (a *Service) VerifyUserPasswordByEmail(email, password string) (*User, bool, error) {
+func (a *Auth) VerifyUserPasswordByEmail(email, password string) (*User, bool, error) {
 	var user User
 	err := a.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
@@ -296,7 +296,7 @@ func (a *Service) VerifyUserPasswordByEmail(email, password string) (*User, bool
 }
 
 // VerifyUserPasswordByMobile verifies a user's password by mobile number
-func (a *Service) VerifyUserPasswordByMobile(mobile, password string) (*User, bool, error) {
+func (a *Auth) VerifyUserPasswordByMobile(mobile, password string) (*User, bool, error) {
 	var user User
 	err := a.db.Where("mobile = ?", mobile).First(&user).Error
 	if err != nil {
@@ -316,7 +316,7 @@ func (a *Service) VerifyUserPasswordByMobile(mobile, password string) (*User, bo
 }
 
 // ChangeUserPassword changes a user's password after verifying the old password
-func (a *Service) ChangeUserPassword(userID uint, oldPassword, newPassword string) error {
+func (a *Auth) ChangeUserPassword(userID uint, oldPassword, newPassword string) error {
 	// First verify the old password
 	isValid, err := a.VerifyUserPassword(userID, oldPassword)
 	if err != nil {

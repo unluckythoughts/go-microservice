@@ -8,7 +8,7 @@ import (
 	"github.com/unluckythoughts/go-microservice/utils"
 )
 
-func (a *Service) LoginHandler(r web.Request) (any, error) {
+func (a *Auth) LoginHandler(r web.Request) (any, error) {
 	details := Credentials{}
 	err := r.GetValidatedBody(&details)
 	if err != nil {
@@ -42,7 +42,7 @@ func (a *Service) LoginHandler(r web.Request) (any, error) {
 	return a.getAuthResponse(r.GetContext(), user)
 }
 
-func (a *Service) GetRoleUserRegister(role UserRole) web.Handler {
+func (a *Auth) GetRoleUserRegister(role UserRole) web.Handler {
 	return func(r web.Request) (any, error) {
 		details := RegisterRequest{}
 		err := r.GetValidatedBody(&details)
@@ -83,17 +83,17 @@ func (a *Service) GetRoleUserRegister(role UserRole) web.Handler {
 	}
 }
 
-func (a *Service) LogoutHandler(r web.Request) (any, error) {
+func (a *Auth) LogoutHandler(r web.Request) (any, error) {
 	// Implement logout logic here
 	// This could involve clearing session data or tokens
 	return "logout successful", nil
 }
 
-func (a *Service) GetUser(r web.Request) (*User, error) {
+func (a *Auth) GetUser(r web.Request) (*User, error) {
 	return GetAuthenticatedUser(r)
 }
 
-func (a *Service) UpdateUserHandler(r web.Request) (any, error) {
+func (a *Auth) UpdateUserHandler(r web.Request) (any, error) {
 	user, err := GetAuthenticatedUser(r)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (a *Service) UpdateUserHandler(r web.Request) (any, error) {
 	return "user updated successfully", nil
 }
 
-func (a *Service) ChangePasswordHandler(r web.Request) (any, error) {
+func (a *Auth) ChangePasswordHandler(r web.Request) (any, error) {
 	user, err := GetAuthenticatedUser(r)
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (a *Service) ChangePasswordHandler(r web.Request) (any, error) {
 	return "password changed successfully", nil
 }
 
-func (a *Service) VerifyHandler(r web.Request) (any, error) {
+func (a *Auth) VerifyHandler(r web.Request) (any, error) {
 	token := r.GetRouteParam("token")
 
 	if token == "" {
@@ -164,7 +164,7 @@ func (a *Service) VerifyHandler(r web.Request) (any, error) {
 	return "verification successful", nil
 }
 
-func (a *Service) UpdatePasswordHandler(r web.Request) (any, error) {
+func (a *Auth) UpdatePasswordHandler(r web.Request) (any, error) {
 	body := UpdatePasswordRequest{}
 	err := r.GetValidatedBody(&body)
 	if err != nil {
@@ -186,7 +186,7 @@ func (a *Service) UpdatePasswordHandler(r web.Request) (any, error) {
 	return "password reset successful", nil
 }
 
-func (a *Service) SendVerificationHandler(r web.Request) (any, error) {
+func (a *Auth) SendVerificationHandler(r web.Request) (any, error) {
 	body := SendVerificationRequest{}
 	err := r.GetValidatedBody(&body)
 	if err != nil {

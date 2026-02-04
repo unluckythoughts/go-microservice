@@ -12,7 +12,7 @@ import (
 	"github.com/unluckythoughts/go-microservice/tools/web"
 )
 
-func (a *Service) getAuthResponse(ctx web.Context, user *User) (LoginResponse, error) {
+func (a *Auth) getAuthResponse(ctx web.Context, user *User) (LoginResponse, error) {
 	resp := LoginResponse{}
 
 	err := ctx.PutSessionValue("user_id", user.ID)
@@ -36,7 +36,7 @@ func (a *Service) getAuthResponse(ctx web.Context, user *User) (LoginResponse, e
 	return resp, nil
 }
 
-func (a *Service) isRouteIgnored(path string) bool {
+func (a *Auth) isRouteIgnored(path string) bool {
 	for _, route := range a.ignoreRoutes {
 		if strings.HasPrefix(path, route) {
 			return true
@@ -80,7 +80,7 @@ func getUserDataFromAuthHeader(headerValue string, secret string) (uint, error) 
 
 	return uint(intUserID), nil
 }
-func (a *Service) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
+func (a *Auth) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
 	userID, err := getUserDataFromAuthHeader(r.GetHeader("Authorization"), a.jwtKey)
 	if err != nil {
 		return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: %w", err))
@@ -108,7 +108,7 @@ func (a *Service) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
 	return user, nil
 }
 
-func (a *Service) GetAuthMiddleware() web.Middleware {
+func (a *Auth) GetAuthMiddleware() web.Middleware {
 	return func(r web.MiddlewareRequest) error {
 		if a.isRouteIgnored(r.GetPath()) {
 			return nil
@@ -142,7 +142,7 @@ func GetAuthenticatedUser(r web.Request) (*User, error) {
 	return authUser, nil
 }
 
-func (a *Service) EnsureRole(role UserRole) web.Middleware {
+func (a *Auth) EnsureRole(role UserRole) web.Middleware {
 	return func(r web.MiddlewareRequest) error {
 		user, err := a.getUserFromRequest(r)
 		if err != nil {

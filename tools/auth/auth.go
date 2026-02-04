@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Service struct {
+type Auth struct {
 	db           *gorm.DB
 	l            *zap.Logger
 	ignoreRoutes []string
@@ -86,10 +86,10 @@ func getOptions(override Options) Options {
 	return opts
 }
 
-func NewAuthService(override Options) *Service {
+func NewAuthService(override Options) *Auth {
 	opts := getOptions(override)
 
-	a := &Service{
+	a := &Auth{
 		db:           opts.DB,
 		l:            opts.Logger,
 		ignoreRoutes: opts.IgnoreRoutes,
@@ -122,25 +122,25 @@ func NewAuthService(override Options) *Service {
 }
 
 // RoleName returns the name of the role for the given UserRole
-func (a *Service) RoleName(role UserRole) string {
+func (a *Auth) RoleName(role UserRole) string {
 	return a.userRoles[role]
 }
 
 // addIgnoreRoute adds the given routes to the ignore list
 // These routes do not require authentication
 // This is useful for routes like login, register, etc.
-func (a *Service) AddIgnoreRoute(routes ...string) {
+func (a *Auth) AddIgnoreRoute(routes ...string) {
 	a.ignoreRoutes = append(a.ignoreRoutes, routes...)
 }
 
 // FormatMobileNumber formats the mobile number to include the default country code
-func (a *Service) FormatMobileNumber(mobile string) string {
+func (a *Auth) FormatMobileNumber(mobile string) string {
 	if mobile == "" {
 		return ""
 	}
 
-	if len(mobile) < 10 {
-		mobile = fmt.Sprintf("+%s %s", a.defaultMobileCountryCode, mobile)
+	if len(mobile) <= 10 {
+		mobile = fmt.Sprintf("%s %s", a.defaultMobileCountryCode, mobile)
 		return mobile
 	}
 
@@ -148,8 +148,8 @@ func (a *Service) FormatMobileNumber(mobile string) string {
 	return mobile
 }
 
-// GetUserRoles returns the map of user roles defined in the Service.
+// GetUserRoles returns the map of user roles defined in the Auth.
 // It does not take any input parameters and returns a map where the key is UserRole and the value is the role name.
-func (a *Service) GetUserRoles() map[UserRole]string {
+func (a *Auth) GetUserRoles() map[UserRole]string {
 	return a.userRoles
 }

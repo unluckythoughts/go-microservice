@@ -18,7 +18,7 @@ func getFirstKey(m map[UserRole]string) UserRole {
 }
 
 // getGoogleUserInfo fetches user information from Google OAuth
-func (a *Service) getGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
+func (a *Auth) getGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
 	if err != nil {
@@ -46,7 +46,7 @@ func (a *Service) getGoogleUserInfo(accessToken string) (*googleUserInfo, error)
 }
 
 // GoogleOAuthLogin handles Google OAuth authentication
-func (a *Service) GoogleOAuthLogin(r web.Request) (any, error) {
+func (a *Auth) GoogleOAuthLogin(r web.Request) (any, error) {
 	// Extract the OAuth request from the request body
 	oauthReq := &GoogleOAuthRequest{}
 	err := r.GetValidatedBody(oauthReq)
