@@ -1,4 +1,4 @@
-module github.com/unluckythoughts/go-microservice
+module github.com/unluckythoughts/go-microservice/v2
 
 go 1.24
 
