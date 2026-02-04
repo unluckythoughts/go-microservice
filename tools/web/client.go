@@ -9,8 +9,8 @@ import (
 	"net/url"
 
 	"github.com/pkg/errors"
-	"github.com/unluckythoughts/go-microservice/tools/web/proxy/httpproxy"
-	"github.com/unluckythoughts/go-microservice/tools/web/proxy/socks5"
+	"github.com/unluckythoughts/go-microservice/v2/tools/web/proxy/httpproxy"
+	"github.com/unluckythoughts/go-microservice/v2/tools/web/proxy/socks5"
 )
 
 type Client interface {

@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/unluckythoughts/go-microservice"
-	"github.com/unluckythoughts/go-microservice/tools/web"
+	"github.com/unluckythoughts/go-microservice/v2"
+	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 )
 
 func exampleMiddleware(r web.MiddlewareRequest) error {

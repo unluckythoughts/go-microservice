@@ -18,7 +18,7 @@ A comprehensive Go framework for building production-ready microservices with bu
 ## Installation
 
 ```bash
-go get github.com/unluckythoughts/go-microservice
+go get github.com/unluckythoughts/go-microservice/v2
 ```
 
 ## Quick Start
@@ -27,8 +27,8 @@ go get github.com/unluckythoughts/go-microservice
 package main
 
 import (
-    "github.com/unluckythoughts/go-microservice"
-    "github.com/unluckythoughts/go-microservice/tools/web"
+    "github.com/unluckythoughts/go-microservice/v2"
+    "github.com/unluckythoughts/go-microservice/v2/tools/web"
 )
 
 func handler(r web.Request) (interface{}, error) {

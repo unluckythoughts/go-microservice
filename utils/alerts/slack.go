@@ -3,7 +3,7 @@ package alerts
 import (
 	"net/http"
 
-	"github.com/unluckythoughts/go-microservice/tools/web"
+	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 	"go.uber.org/zap"
 )
 

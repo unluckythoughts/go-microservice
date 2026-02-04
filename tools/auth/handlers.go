@@ -105,7 +105,21 @@ func (a *Auth) UpdateUserHandler(r web.Request) (any, error) {
 		return nil, err
 	}
 
-	err = a.UpdateUserPartial(user.ID, body)
+	new_user := User{
+		Name:  body.Name,
+		Email: body.Email,
+	}
+	new_user.Mobile.Set(body.Mobile)
+
+	if new_user.Email != "" && new_user.Email != user.Email {
+		new_user.EmailVerified = false
+	}
+
+	if new_user.Mobile != "" && new_user.Mobile != user.Mobile {
+		new_user.MobileVerified = false
+	}
+
+	err = a.UpdateUserPartial(user.ID, new_user)
 	if err != nil {
 		return nil, err
 	}

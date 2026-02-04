@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
-	"github.com/unluckythoughts/go-microservice/utils"
+	"github.com/unluckythoughts/go-microservice/v2/utils"
 	"go.uber.org/zap"
 )
 
