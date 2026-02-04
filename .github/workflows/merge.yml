@@ -20,4 +20,4 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_release_rules: fix:patch,hotfix:patch,chore:patch,docs:patch,feat:minor,perf:major,refactor:major
+          custom_release_rules: fix:patch,hotfix:patch,chore:patch,docs:patch,feat:minor,perf:patch,refactor:minor
