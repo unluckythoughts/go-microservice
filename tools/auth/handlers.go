@@ -153,13 +153,18 @@ func (a *Auth) GetRegisterHandlerForUserRole(role Role) web.Handler {
 }
 
 // GetUser returns the currently authenticated user
-// example path: GET .../me
-func (a *Auth) GetUser(r web.Request) (*User, error) {
-	return GetAuthenticatedUser(r)
+// example path: GET .../user
+func (a *Auth) GetUserHandler(r web.Request) (any, error) {
+	user, err := GetAuthenticatedUser(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.getAuthResponse(r.GetContext(), user)
 }
 
 // UpdateUserHandler handles user profile update requests
-// example path: PUT .../me
+// example path: PUT .../user
 func (a *Auth) UpdateUserHandler(r web.Request) (any, error) {
 	user, err := GetAuthenticatedUser(r)
 	if err != nil {
@@ -195,7 +200,7 @@ func (a *Auth) UpdateUserHandler(r web.Request) (any, error) {
 }
 
 // ChangePasswordHandler handles password change requests for authenticated users
-// example path: POST .../change-password
+// example path: POST .../user/change-password
 func (a *Auth) ChangePasswordHandler(r web.Request) (any, error) {
 	user, err := GetAuthenticatedUser(r)
 	if err != nil {
@@ -259,7 +264,7 @@ func (a *Auth) getTarget(target string) (string, bool) {
 }
 
 // ResetPasswordHandler handles password reset requests
-// example path: GET .../reset-password/:target?type=(email or mobile)
+// example path: GET .../user/reset-password/:target?type=(email or mobile)
 func (a *Auth) ResetPasswordHandler(r web.Request) (any, error) {
 	targetType := r.GetURLParam("type")
 	target := r.GetRouteParam("target")
@@ -303,7 +308,7 @@ func (a *Auth) ResetPasswordHandler(r web.Request) (any, error) {
 }
 
 // UpdatePasswordHandler handles password reset requests using a verification token
-// example path: POST .../update-password
+// example path: POST .../user/update-password
 func (a *Auth) UpdatePasswordHandler(r web.Request) (any, error) {
 	body := UpdatePasswordRequest{}
 	err := r.GetValidatedBody(&body)
