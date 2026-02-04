@@ -10,6 +10,14 @@ import (
 	"gorm.io/gorm"
 )
 
+// LogoutHandler handles user logout requests
+// example path: GET .../logout
+func (a *Auth) LogoutHandler(r web.Request) (any, error) {
+	r.GetContext().PutSessionValue("user", nil)
+	r.GetContext().PutSessionValue("user_id", 0)
+	return "logout successful", nil
+}
+
 // LoginHandler handles user login requests
 // example path: POST .../login
 func (a *Auth) LoginHandler(r web.Request) (any, error) {
@@ -142,13 +150,6 @@ func (a *Auth) GetRegisterHandlerForUserRole(role Role) web.Handler {
 
 		return "user registered successfully", nil
 	}
-}
-
-// LogoutHandler handles user logout requests
-// example path: POST .../logout
-func (a *Auth) LogoutHandler(r web.Request) (any, error) {
-	// TODO: clear session data or tokens
-	return "logout successful", nil
 }
 
 // GetUser returns the currently authenticated user
