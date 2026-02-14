@@ -110,7 +110,13 @@ func SessionMiddleware(store SessionStore) Middleware {
 	return func(req MiddlewareRequest) error {
 		session, err := store.Get(req.(*request)._int, sessionName)
 		if err != nil {
-			return err
+			// If session is invalid (e.g., securecookie error), create a new empty session
+			// The router will save this new session at the end of the request,
+			// which will overwrite the invalid cookie
+			session, err = store.New(req.(*request)._int, sessionName)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Set the session in the request context
