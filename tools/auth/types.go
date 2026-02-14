@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -38,12 +39,17 @@ func (p Password) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (p *Password) UnmarshalJSON(data []byte) error {
-	if len(data) < 2 {
+	// Handle null
+	if string(data) == "null" {
 		*p = ""
 		return nil
 	}
-	// Remove quotes
-	*p = Password(data[1 : len(data)-1])
+	// Unmarshal as regular string
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*p = Password(s)
 	return nil
 }
 
@@ -101,12 +107,17 @@ func (m Mobile) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (m *Mobile) UnmarshalJSON(data []byte) error {
-	if len(data) < 2 {
+	// Handle null
+	if string(data) == "null" {
 		*m = ""
 		return nil
 	}
-	// Remove quotes
-	*m = Mobile(data[1 : len(data)-1])
+	// Unmarshal as regular string
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*m = Mobile(s)
 	return nil
 }
 
