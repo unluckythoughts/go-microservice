@@ -13,8 +13,11 @@ import (
 // LogoutHandler handles user logout requests
 // example path: GET .../logout
 func (a *Auth) LogoutHandler(r web.Request) (any, error) {
-	r.GetContext().PutSessionValue("user", nil)
-	r.GetContext().PutSessionValue("user_id", 0)
+	// Clear the session and invalidate the cookie
+	err := r.GetContext().ClearSession()
+	if err != nil {
+		return nil, err
+	}
 	return "logout successful", nil
 }
 

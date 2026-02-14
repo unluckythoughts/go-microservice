@@ -19,6 +19,7 @@ type Context interface {
 	SetSession(session *sessions.Session)
 	GetSessionValue(key string) (any, error)
 	PutSessionValue(key string, value any) error
+	ClearSession() error
 	Cancel()
 	WithTimeout(duration time.Duration) Context
 }
@@ -93,4 +94,19 @@ func (c *ctx) PutSessionValue(key string, value any) error {
 
 func (c *ctx) SetSession(session *sessions.Session) {
 	c.Context = context.WithValue(c, sessionContextKey, session)
+}
+
+func (c *ctx) ClearSession() error {
+	session, ok := c.Value(sessionContextKey).(*sessions.Session)
+	if !ok {
+		return errors.New("session not found in request context")
+	}
+	// Clear all session values
+	for key := range session.Values {
+		delete(session.Values, key)
+	}
+	// Set MaxAge to -1 to delete the cookie
+	session.Options.MaxAge = -1
+	c.Context = context.WithValue(c, sessionContextKey, session)
+	return nil
 }
