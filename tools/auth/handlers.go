@@ -213,10 +213,6 @@ func (a *Auth) ChangePasswordHandler(r web.Request) (any, error) {
 		return nil, err
 	}
 
-	if !IsValidPassword(body.NewPassword) {
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("new password must be at least 10 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character"))
-	}
-
 	err = a.ChangeUserPassword(user.ID, body.OldPassword, body.NewPassword)
 	if err != nil {
 		return nil, err

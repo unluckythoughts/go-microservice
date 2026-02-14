@@ -95,12 +95,12 @@ func (a *Auth) VerifyToken(target string, token string) (bool, error) {
 // CreateUser creates a new user with hashed password
 func (a *Auth) CreateUser(user *User) error {
 	// Hash the password before saving
-	if user.Password != "" {
-		hashedPassword, err := utils.GetHash(user.Password)
+	if user.Password.String() != "" {
+		hashedPassword, err := utils.GetHash(user.Password.String())
 		if err != nil {
 			return err
 		}
-		user.Password = hashedPassword
+		user.Password = Password(hashedPassword)
 	}
 	return a.db.Create(user).Error
 }
@@ -159,12 +159,12 @@ func (a *Auth) GetAllUsers(offset, limit int) ([]User, error) {
 // UpdateUser updates an existing user with password hashing if needed
 func (a *Auth) UpdateUser(user *User) error {
 	// Hash the password if it's being updated and not empty
-	if user.Password != "" {
-		hashedPassword, err := utils.GetHash(user.Password)
+	if user.Password.String() != "" {
+		hashedPassword, err := utils.GetHash(user.Password.String())
 		if err != nil {
 			return err
 		}
-		user.Password = hashedPassword
+		user.Password = Password(hashedPassword)
 	}
 	return a.db.Save(user).Error
 }
@@ -273,9 +273,9 @@ func (a *Auth) GetUserByGoogleID(googleID string) (*User, error) {
 
 // Password-related functions
 // UpdateUserPassword updates the password for a user
-func (a *Auth) UpdateUserPassword(userID uint, newPassword string) error {
+func (a *Auth) UpdateUserPassword(userID uint, newPassword Password) error {
 	// Hash the new password
-	hashedPassword, err := utils.GetHash(newPassword)
+	hashedPassword, err := utils.GetHash(newPassword.String())
 	if err != nil {
 		return err
 	}
@@ -291,7 +291,7 @@ func (a *Auth) UpdateUserPassword(userID uint, newPassword string) error {
 }
 
 // VerifyUserPassword verifies a user's password
-func (a *Auth) VerifyUserPassword(userID uint, password string) (bool, error) {
+func (a *Auth) VerifyUserPassword(userID uint, password Password) (bool, error) {
 	var user User
 	err := a.db.Select("password").First(&user, userID).Error
 	if err != nil {
@@ -301,11 +301,11 @@ func (a *Auth) VerifyUserPassword(userID uint, password string) (bool, error) {
 		return false, err
 	}
 
-	return utils.CompareValue(password, user.Password)
+	return utils.CompareValue(password.String(), user.Password.String())
 }
 
 // VerifyUserPasswordByEmail verifies a user's password by email
-func (a *Auth) VerifyUserPasswordByEmail(email, password string) (*User, bool, error) {
+func (a *Auth) VerifyUserPasswordByEmail(email string, password Password) (*User, bool, error) {
 	var user User
 	err := a.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
@@ -315,7 +315,7 @@ func (a *Auth) VerifyUserPasswordByEmail(email, password string) (*User, bool, e
 		return nil, false, err
 	}
 
-	isValid, err := utils.CompareValue(password, user.Password)
+	isValid, err := utils.CompareValue(password.String(), user.Password.String())
 	if err != nil {
 		return nil, false, err
 	}
@@ -325,7 +325,7 @@ func (a *Auth) VerifyUserPasswordByEmail(email, password string) (*User, bool, e
 }
 
 // VerifyUserPasswordByMobile verifies a user's password by mobile number
-func (a *Auth) VerifyUserPasswordByMobile(mobile, password string) (*User, bool, error) {
+func (a *Auth) VerifyUserPasswordByMobile(mobile string, password Password) (*User, bool, error) {
 	var user User
 	err := a.db.Where("mobile = ?", mobile).First(&user).Error
 	if err != nil {
@@ -335,7 +335,7 @@ func (a *Auth) VerifyUserPasswordByMobile(mobile, password string) (*User, bool,
 		return nil, false, err
 	}
 
-	isValid, err := utils.CompareValue(password, user.Password)
+	isValid, err := utils.CompareValue(password.String(), user.Password.String())
 	if err != nil {
 		return nil, false, err
 	}
@@ -345,7 +345,7 @@ func (a *Auth) VerifyUserPasswordByMobile(mobile, password string) (*User, bool,
 }
 
 // ChangeUserPassword changes a user's password after verifying the old password
-func (a *Auth) ChangeUserPassword(userID uint, oldPassword, newPassword string) error {
+func (a *Auth) ChangeUserPassword(userID uint, oldPassword, newPassword Password) error {
 	// First verify the old password
 	isValid, err := a.VerifyUserPassword(userID, oldPassword)
 	if err != nil {
