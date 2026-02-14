@@ -21,6 +21,10 @@ type User struct {
 	GoogleAvatar string `gorm:"column:google_avatar" json:"google_avatar,omitempty"`
 }
 
+func (User) TableName() string {
+	return "users"
+}
+
 var ErrExpiredToken = fmt.Errorf("verification token has expired")
 
 type Verify struct {
@@ -29,6 +33,10 @@ type Verify struct {
 	Token     string    `gorm:"column:token;not null;uniqueIndex" json:"-"`
 	Verified  bool      `gorm:"column:verified;not null;default:false" json:"-"`
 	ExpiresAt time.Time `gorm:"column:expires_at;not null" json:"-"`
+}
+
+func (Verify) TableName() string {
+	return "verify"
 }
 
 type LoginResponse struct {
