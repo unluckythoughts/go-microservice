@@ -31,6 +31,22 @@ func (p *Password) Set(value string) error {
 	return nil
 }
 
+// MarshalJSON implements json.Marshaler
+func (p Password) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + string(p) + `"`), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (p *Password) UnmarshalJSON(data []byte) error {
+	if len(data) < 2 {
+		*p = ""
+		return nil
+	}
+	// Remove quotes
+	*p = Password(data[1 : len(data)-1])
+	return nil
+}
+
 // Mobile is the mobile number of the user
 type Mobile string
 
@@ -76,6 +92,22 @@ func (m *Mobile) GetNumber() (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// MarshalJSON implements json.Marshaler
+func (m Mobile) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + string(m) + `"`), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (m *Mobile) UnmarshalJSON(data []byte) error {
+	if len(data) < 2 {
+		*m = ""
+		return nil
+	}
+	// Remove quotes
+	*m = Mobile(data[1 : len(data)-1])
+	return nil
 }
 
 // Role represents the role of a user in the application
