@@ -38,13 +38,13 @@ type LoginResponse struct {
 type Credentials struct {
 	Email    string   `json:"email" valid:"email~email is not valid"`
 	Mobile   string   `json:"mobile" valid:"mobile~mobile is not valid"`
-	Password Password `json:"password" valid:"password~password must be 10-64 characters and contain uppercase, lowercase, digit, and special character"`
+	Password Password `json:"password" valid:"password~invalid password"`
 }
 
 type RegisterRequest struct {
 	Email    string   `json:"email" valid:"email~email is not valid"`
 	Mobile   string   `json:"mobile" valid:"mobile~mobile is not valid"`
-	Password Password `json:"password" valid:"password~password must be 10-64 characters and contain uppercase, lowercase, digit, and special character"`
+	Password Password `json:"password" valid:"password~invalid password"`
 	Name     string   `json:"name" valid:"required~name is required"`
 }
 
@@ -56,12 +56,12 @@ type UpdateUserRequest struct {
 
 type UpdatePasswordRequest struct {
 	VerifyToken string   `json:"verify_token" valid:"required~verification token is required"`
-	NewPassword Password `json:"new_password" valid:"password~password must be 10-64 characters and contain uppercase, lowercase, digit, and special character"`
+	NewPassword Password `json:"new_password" valid:"password~invalid password"`
 }
 
 type ChangePasswordRequest struct {
-	OldPassword Password `json:"old_password" valid:"password~password must be 10-64 characters and contain uppercase, lowercase, digit, and special character"`
-	NewPassword Password `json:"new_password" valid:"password~password must be 10-64 characters and contain uppercase, lowercase, digit, and special character"`
+	OldPassword Password `json:"old_password" valid:"password~invalid password"`
+	NewPassword Password `json:"new_password" valid:"password~invalid password"`
 }
 
 type SendVerificationRequest struct {
