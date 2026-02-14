@@ -81,15 +81,28 @@ func newRouter(opts Options) *router {
 }
 
 // setCORSHeaders sets the CORS headers for the response
-func setCORSHeaders(w http.ResponseWriter) {
-	w.Header().Add("Access-Control-Allow-Origin", "*")
-	w.Header().Add("Access-Control-Allow-Headers", "*")
-	w.Header().Add("Access-Control-Allow-Methods", "*")
+func setCORSHeaders(w http.ResponseWriter, req *http.Request) {
+	origin := req.Header.Get("Origin")
+
+	// Allow localhost origins for development
+	if strings.HasPrefix(origin, "http://localhost:") ||
+		strings.HasPrefix(origin, "http://127.0.0.1:") ||
+		strings.HasPrefix(origin, "https://localhost:") {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	} else if origin == "" {
+		// No origin header (non-browser requests)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+	}
+
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Max-Age", "86400")
 }
 
 // cors http handler function
 func (r *router) corsHandler(w http.ResponseWriter, req *http.Request) {
-	setCORSHeaders(w)
+	setCORSHeaders(w, req)
 	sendResponse(newResponse(w, r.newRequest(req, nil)), nil, nil, 200)
 }
 
@@ -185,7 +198,7 @@ func (r *router) getRouterHandlerForPath(path string, handlers []any) httprouter
 
 	return httprouter.Handle(func(w http.ResponseWriter, httpReq *http.Request, p httprouter.Params) {
 		if r.cors {
-			setCORSHeaders(w)
+			setCORSHeaders(w, httpReq)
 		}
 
 		req := r.newRequest(httpReq, p)
