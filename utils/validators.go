@@ -4,6 +4,7 @@ import (
 	"log"
 	"reflect"
 	"regexp"
+	"strings"
 
 	"github.com/asaskevich/govalidator"
 )
@@ -12,6 +13,30 @@ import (
 // This package registers custom validation tags that can be used with the govalidator library
 
 func init() {
+	// Register custom validator for email slices
+	govalidator.CustomTypeTagMap.Set("emails", govalidator.CustomTypeValidator(func(i interface{}, o interface{}) bool {
+		if i == nil {
+			return false
+		}
+
+		emails, ok := i.([]string)
+		if !ok {
+			return false
+		}
+
+		if len(emails) < 1 {
+			return false
+		}
+
+		for _, email := range emails {
+			if !govalidator.IsEmail(strings.TrimSpace(email)) {
+				return false
+			}
+		}
+
+		return true
+	}))
+
 	// Register custom validator for mobile
 	govalidator.CustomTypeTagMap.Set("mobile", govalidator.CustomTypeValidator(func(i interface{}, o interface{}) bool {
 		if i == nil {
@@ -58,6 +83,11 @@ func init() {
 
 		return false
 	}))
+}
+
+func ValidateStruct(s interface{}) error {
+	_, err := govalidator.ValidateStruct(s)
+	return err
 }
 
 func IsMobile(mobile string) bool {
