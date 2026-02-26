@@ -1,0 +1,37 @@
+services:
+  test-service:
+    image: "test-service:latest"
+    hostname: "test-service"
+
+  test-db:
+    image: "postgres:latest"
+    hostname: "test-db"
+    container_name: "test-db"
+    environment:
+      POSTGRES_USER: "test"
+      POSTGRES_PASSWORD: "test"
+      POSTGRES_DB: "test"
+    ports:
+      - "5432:5432"
+
+  test-redis:
+    image: "bitnami/redis:latest"
+    hostname: "test-redis"
+    container_name: "test-redis"
+    ports:
+      - "6379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+
+  test-stack:
+    image: "test-localstack:latest"
+    hostname: "test-stack"
+    container_name: "test-stack"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEBUG=1
+      - SERVICES=sqs
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "4566:4566"
