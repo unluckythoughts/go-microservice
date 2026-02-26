@@ -12,7 +12,7 @@ import (
 
 // LogoutHandler handles user logout requests
 // example path: GET .../logout
-func (a *Auth) LogoutHandler(r web.Request) (any, error) {
+func (s *Service) LogoutHandler(r web.Request) (any, error) {
 	// Clear the session and invalidate the cookie
 	err := r.GetContext().ClearSession()
 	if err != nil {
@@ -23,7 +23,7 @@ func (a *Auth) LogoutHandler(r web.Request) (any, error) {
 
 // LoginHandler handles user login requests
 // example path: POST .../login
-func (a *Auth) LoginHandler(r web.Request) (any, error) {
+func (s *Service) LoginHandler(r web.Request) (any, error) {
 	details := Credentials{}
 	err := r.GetValidatedBody(&details)
 	if err != nil {
@@ -35,7 +35,7 @@ func (a *Auth) LoginHandler(r web.Request) (any, error) {
 	}
 
 	if details.Mobile != "" {
-		user, ok, err := a.VerifyUserPasswordByMobile(details.Mobile, details.Password)
+		user, ok, err := s.VerifyUserPasswordByMobile(details.Mobile, details.Password)
 		if err != nil {
 			return "", err
 		}
@@ -43,10 +43,10 @@ func (a *Auth) LoginHandler(r web.Request) (any, error) {
 		if !ok {
 			return "", fmt.Errorf("invalid mobile or password")
 		}
-		return a.getAuthResponse(r.GetContext(), user)
+		return s.getAuthResponse(r.GetContext(), user)
 	}
 
-	user, ok, err := a.VerifyUserPasswordByEmail(details.Email, details.Password)
+	user, ok, err := s.VerifyUserPasswordByEmail(details.Email, details.Password)
 	if err != nil {
 		return "", err
 	}
@@ -54,12 +54,12 @@ func (a *Auth) LoginHandler(r web.Request) (any, error) {
 		return "", fmt.Errorf("invalid email or password")
 	}
 
-	return a.getAuthResponse(r.GetContext(), user)
+	return s.getAuthResponse(r.GetContext(), user)
 }
 
 // SendTokenHandler handles the creation of a verification token for a given target (email or mobile)
 // example path: PATCH .../verify/:target?type=(email or mobile)
-func (a *Auth) SendTokenHandler(r web.Request) (any, error) {
+func (s *Service) SendTokenHandler(r web.Request) (any, error) {
 	targetType := r.GetURLParam("type")
 	target := r.GetRouteParam("target")
 
@@ -67,7 +67,7 @@ func (a *Auth) SendTokenHandler(r web.Request) (any, error) {
 		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("target is required"))
 	}
 
-	token, err := a.CreateVerifyToken(target)
+	token, err := s.CreateVerifyToken(target)
 	if err != nil {
 		return nil, web.NewError(http.StatusInternalServerError, err)
 	}
@@ -89,7 +89,7 @@ func (a *Auth) SendTokenHandler(r web.Request) (any, error) {
 
 // VerifyTokenHandler handles the verification of a token for a given target (email or mobile)
 // example path: GET .../verify/:target/:token
-func (a *Auth) VerifyTokenHandler(r web.Request) (any, error) {
+func (s *Service) VerifyTokenHandler(r web.Request) (any, error) {
 	target := r.GetRouteParam("target")
 	token := r.GetRouteParam("token")
 
@@ -97,7 +97,7 @@ func (a *Auth) VerifyTokenHandler(r web.Request) (any, error) {
 		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("verification token is required"))
 	}
 
-	ok, err := a.VerifyToken(target, token)
+	ok, err := s.VerifyToken(target, token)
 	if err != nil {
 		if errors.Is(err, ErrExpiredToken) {
 			return nil, web.NewError(http.StatusBadRequest, err)
@@ -112,7 +112,7 @@ func (a *Auth) VerifyTokenHandler(r web.Request) (any, error) {
 
 // GetRegisterHandlerForUserRole returns a handler for user registration with a specific role
 // example path: POST .../register
-func (a *Auth) GetRegisterHandlerForUserRole(role Role) web.Handler {
+func (s *Service) GetRegisterHandlerForUserRole(role Role) web.Handler {
 	return func(r web.Request) (any, error) {
 		details := RegisterRequest{}
 		err := r.GetValidatedBody(&details)
@@ -138,15 +138,15 @@ func (a *Auth) GetRegisterHandlerForUserRole(role Role) web.Handler {
 			}
 		}
 
-		if user.Email != "" && a.IsVerified(user.Email) {
+		if user.Email != "" && s.IsVerified(user.Email) {
 			user.EmailVerified = true
 		}
 
-		if user.Mobile.String() != "" && a.IsVerified(user.Mobile.String()) {
+		if user.Mobile.String() != "" && s.IsVerified(user.Mobile.String()) {
 			user.MobileVerified = true
 		}
 
-		err = a.CreateUser(&user)
+		err = s.CreateUser(&user)
 		if err != nil {
 			return nil, web.NewError(http.StatusInternalServerError, err)
 		}
@@ -157,18 +157,18 @@ func (a *Auth) GetRegisterHandlerForUserRole(role Role) web.Handler {
 
 // GetUser returns the currently authenticated user
 // example path: GET .../user
-func (a *Auth) GetUserHandler(r web.Request) (any, error) {
+func (s *Service) GetUserHandler(r web.Request) (any, error) {
 	user, err := GetAuthenticatedUser(r)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.getAuthResponse(r.GetContext(), user)
+	return s.getAuthResponse(r.GetContext(), user)
 }
 
 // UpdateUserHandler handles user profile update requests
 // example path: PUT .../user
-func (a *Auth) UpdateUserHandler(r web.Request) (any, error) {
+func (s *Service) UpdateUserHandler(r web.Request) (any, error) {
 	user, err := GetAuthenticatedUser(r)
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ func (a *Auth) UpdateUserHandler(r web.Request) (any, error) {
 		new_user.MobileVerified = false
 	}
 
-	err = a.UpdateUserPartial(user.ID, new_user)
+	err = s.UpdateUserPartial(user.ID, new_user)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func (a *Auth) UpdateUserHandler(r web.Request) (any, error) {
 
 // ChangePasswordHandler handles password change requests for authenticated users
 // example path: POST .../user/change-password
-func (a *Auth) ChangePasswordHandler(r web.Request) (any, error) {
+func (s *Service) ChangePasswordHandler(r web.Request) (any, error) {
 	user, err := GetAuthenticatedUser(r)
 	if err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ func (a *Auth) ChangePasswordHandler(r web.Request) (any, error) {
 		return nil, err
 	}
 
-	err = a.ChangeUserPassword(user.ID, body.OldPassword, body.NewPassword)
+	err = s.ChangeUserPassword(user.ID, body.OldPassword, body.NewPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func getResetTarget(user *User, targetType string) (string, string, error) {
 	return "", "", fmt.Errorf("user has neither email nor mobile")
 }
 
-func (a *Auth) getTarget(target string) (string, bool) {
+func (s *Service) getTarget(target string) (string, bool) {
 	if target == "" {
 		return "", false
 	}
@@ -264,7 +264,7 @@ func (a *Auth) getTarget(target string) (string, bool) {
 
 // ResetPasswordHandler handles password reset requests
 // example path: GET .../user/reset-password/:target?type=(email or mobile)
-func (a *Auth) ResetPasswordHandler(r web.Request) (any, error) {
+func (s *Service) ResetPasswordHandler(r web.Request) (any, error) {
 	targetType := r.GetURLParam("type")
 	target := r.GetRouteParam("target")
 
@@ -273,7 +273,7 @@ func (a *Auth) ResetPasswordHandler(r web.Request) (any, error) {
 	}
 
 	var user User
-	err := a.db.Where("email = ? OR mobile = ?", target, target).First(&user).Error
+	err := s.db.Where("email = ? OR mobile = ?", target, target).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("user not found for the given target"))
@@ -286,7 +286,7 @@ func (a *Auth) ResetPasswordHandler(r web.Request) (any, error) {
 		return nil, web.NewError(http.StatusInternalServerError, err)
 	}
 
-	token, err := a.CreateVerifyToken(target)
+	token, err := s.CreateVerifyToken(target)
 	if err != nil {
 		return nil, web.NewError(http.StatusInternalServerError, err)
 	}
@@ -308,30 +308,30 @@ func (a *Auth) ResetPasswordHandler(r web.Request) (any, error) {
 
 // UpdatePasswordHandler handles password reset requests using a verification token
 // example path: POST .../user/update-password
-func (a *Auth) UpdatePasswordHandler(r web.Request) (any, error) {
+func (s *Service) UpdatePasswordHandler(r web.Request) (any, error) {
 	body := UpdatePasswordRequest{}
 	err := r.GetValidatedBody(&body)
 	if err != nil {
 		return nil, err
 	}
 
-	v, err := a.GetVerification(body.VerifyToken)
+	v, err := s.GetVerification(body.VerifyToken)
 	if err != nil {
 		return nil, err
 	}
 
-	target, ok := a.getTarget(v.Target)
+	target, ok := s.getTarget(v.Target)
 	if !ok {
 		return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("invalid verification target"))
 	}
 
 	var user User
-	err = a.db.Where("email = ? OR mobile = ?", target, target).First(&user).Error
+	err = s.db.Where("email = ? OR mobile = ?", target, target).First(&user).Error
 	if err != nil {
 		return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("user not found for the given verification token"))
 	}
 
-	err = a.UpdateUserPassword(user.ID, body.NewPassword)
+	err = s.UpdateUserPassword(user.ID, body.NewPassword)
 	if err != nil {
 		return nil, err
 	}

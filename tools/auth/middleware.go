@@ -12,7 +12,7 @@ import (
 	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 )
 
-func (a *Auth) getAuthResponse(ctx web.Context, user *User) (LoginResponse, error) {
+func (s *Service) getAuthResponse(ctx web.Context, user *User) (LoginResponse, error) {
 	resp := LoginResponse{}
 
 	err := ctx.PutSessionValue("user_id", user.ID)
@@ -21,12 +21,12 @@ func (a *Auth) getAuthResponse(ctx web.Context, user *User) (LoginResponse, erro
 	}
 
 	// Generate a JWT token for the user
-	strToken, err := web.CreateJWT(a.jwtKey, jwt.MapClaims{
+	strToken, err := web.CreateJWT(s.jwtKey, jwt.MapClaims{
 		"sub": strconv.Itoa(int(user.ID)),
 		"iss": "table-app",
 		"aud": []string{user.Role.Value()},
 		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(a.tokenValid).Unix(),
+		"exp": time.Now().Add(s.tokenValid).Unix(),
 	})
 	if err != nil {
 		return resp, err
@@ -36,8 +36,8 @@ func (a *Auth) getAuthResponse(ctx web.Context, user *User) (LoginResponse, erro
 	return resp, nil
 }
 
-func (a *Auth) isRouteIgnored(path string) bool {
-	for _, route := range a.ignoreRoutes {
+func (s *Service) isRouteIgnored(path string) bool {
+	for _, route := range s.ignoreRoutes {
 		if strings.HasPrefix(path, route) {
 			return true
 		}
@@ -80,8 +80,8 @@ func getUserDataFromAuthHeader(headerValue string, secret string) (uint, error) 
 
 	return uint(intUserID), nil
 }
-func (a *Auth) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
-	userID, err := getUserDataFromAuthHeader(r.GetHeader("Authorization"), a.jwtKey)
+func (s *Service) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
+	userID, err := getUserDataFromAuthHeader(r.GetHeader("Authorization"), s.jwtKey)
 	if err != nil {
 		return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: %w", err))
 	}
@@ -100,7 +100,7 @@ func (a *Auth) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
 	}
 
 	// Check if the user exists in the database
-	user, err := a.GetUserByID(userID)
+	user, err := s.GetUserByID(userID)
 	if err != nil {
 		return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: Please log in to access this link; %w", err))
 	}
@@ -108,13 +108,13 @@ func (a *Auth) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
 	return user, nil
 }
 
-func (a *Auth) GetAuthMiddleware() web.Middleware {
+func (s *Service) GetAuthMiddleware() web.Middleware {
 	return func(r web.MiddlewareRequest) error {
-		if a.isRouteIgnored(r.GetPath()) {
+		if s.isRouteIgnored(r.GetPath()) {
 			return nil
 		}
 
-		user, err := a.getUserFromRequest(r)
+		user, err := s.getUserFromRequest(r)
 		if err != nil {
 			return err
 		}
@@ -142,9 +142,9 @@ func GetAuthenticatedUser(r web.Request) (*User, error) {
 	return authUser, nil
 }
 
-func (a *Auth) EnsureRole(role Role) web.Middleware {
+func (s *Service) EnsureRole(role Role) web.Middleware {
 	return func(r web.MiddlewareRequest) error {
-		user, err := a.getUserFromRequest(r)
+		user, err := s.getUserFromRequest(r)
 		if err != nil {
 			return err
 		}

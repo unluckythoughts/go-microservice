@@ -18,7 +18,7 @@ func getFirstKey(m map[Role]string) Role {
 }
 
 // getGoogleUserInfo fetches user information from Google OAuth
-func (a *Auth) getGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
+func (s *Service) getGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
 	if err != nil {
@@ -46,7 +46,7 @@ func (a *Auth) getGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
 }
 
 // GoogleOAuthLogin handles Google OAuth authentication
-func (a *Auth) GoogleOAuthLogin(r web.Request) (any, error) {
+func (s *Service) GoogleOAuthLogin(r web.Request) (any, error) {
 	// Extract the OAuth request from the request body
 	oauthReq := &GoogleOAuthRequest{}
 	err := r.GetValidatedBody(oauthReq)
@@ -54,22 +54,22 @@ func (a *Auth) GoogleOAuthLogin(r web.Request) (any, error) {
 		return nil, web.NewError(http.StatusBadRequest, err)
 	}
 
-	a.GoogleOauthConfig.RedirectURL = oauthReq.RedirectURI
+	s.GoogleOauthConfig.RedirectURL = oauthReq.RedirectURI
 
 	// Exchange authorization code for access token
-	token, err := a.GoogleOauthConfig.Exchange(context.Background(), oauthReq.Code)
+	token, err := s.GoogleOauthConfig.Exchange(context.Background(), oauthReq.Code)
 	if err != nil {
 		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("failed to exchange code for token: %w", err))
 	}
 
 	// Get user info from Google
-	userInfo, err := a.getGoogleUserInfo(token.AccessToken)
+	userInfo, err := s.getGoogleUserInfo(token.AccessToken)
 	if err != nil {
 		return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("failed to get user info: %w", err))
 	}
 
 	// Check if user exists by Google ID
-	user, err := a.GetUserByGoogleID(userInfo.ID)
+	user, err := s.GetUserByGoogleID(userInfo.ID)
 	if err != nil {
 		// User doesn't exist, create new user
 		user = &User{
@@ -77,15 +77,15 @@ func (a *Auth) GoogleOAuthLogin(r web.Request) (any, error) {
 			Email:         userInfo.Email,
 			GoogleID:      userInfo.ID,
 			GoogleAvatar:  userInfo.Picture,
-			Role:          getFirstKey(a.userRoles), // Default to user role
+			Role:          getFirstKey(s.userRoles), // Default to user role
 			EmailVerified: true,
 		}
 
-		err = a.CreateUser(user)
+		err = s.CreateUser(user)
 		if err != nil {
 			return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("failed to create user: %w", err))
 		}
 	}
 
-	return a.getAuthResponse(r.GetContext(), user)
+	return s.getAuthResponse(r.GetContext(), user)
 }

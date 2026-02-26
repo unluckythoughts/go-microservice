@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Auth struct {
+type Service struct {
 	db           *gorm.DB
 	l            *zap.Logger
 	ignoreRoutes []string
@@ -93,10 +93,10 @@ func getOptions(override Options) Options {
 	return opts
 }
 
-func NewAuthService(override Options) *Auth {
+func New(override Options) *Service {
 	opts := getOptions(override)
 
-	a := &Auth{
+	s := &Service{
 		db:           opts.DB,
 		l:            opts.Logger,
 		ignoreRoutes: opts.IgnoreRoutes,
@@ -106,13 +106,13 @@ func NewAuthService(override Options) *Auth {
 
 	if len(opts.UserRoles) == 0 {
 		opts.UserRoles = map[Role]string{
-			0:  "user",
+			1:  "user",
 			99: "admin",
 		}
 	}
 
 	if opts.GoogleOauth.ClientID != "" && opts.GoogleOauth.ClientSecret != "" {
-		a.GoogleOauthConfig = oauth2.Config{
+		s.GoogleOauthConfig = oauth2.Config{
 			ClientID:     opts.GoogleOauth.ClientID,
 			ClientSecret: opts.GoogleOauth.ClientSecret,
 			Scopes: []string{
@@ -123,31 +123,31 @@ func NewAuthService(override Options) *Auth {
 		}
 	}
 
-	a.defaultMobileCountryCode = opts.DefaultMobileCountryCode
+	s.defaultMobileCountryCode = opts.DefaultMobileCountryCode
 
-	return a
+	return s
 }
 
 // RoleName returns the name of the role for the given Role
-func (a *Auth) RoleName(role Role) string {
-	return a.userRoles[role]
+func (s *Service) RoleName(role Role) string {
+	return s.userRoles[role]
 }
 
 // addIgnoreRoute adds the given routes to the ignore list
 // These routes do not require authentication
 // This is useful for routes like login, register, etc.
-func (a *Auth) AddIgnoreRoute(routes ...string) {
-	a.ignoreRoutes = append(a.ignoreRoutes, routes...)
+func (s *Service) AddIgnoreRoute(routes ...string) {
+	s.ignoreRoutes = append(s.ignoreRoutes, routes...)
 }
 
 // FormatMobileNumber formats the mobile number to include the default country code
-func (a *Auth) FormatMobileNumber(mobile string) string {
+func (s *Service) FormatMobileNumber(mobile string) string {
 	if mobile == "" {
 		return ""
 	}
 
 	if len(mobile) <= 10 {
-		mobile = fmt.Sprintf("%s %s", a.defaultMobileCountryCode, mobile)
+		mobile = fmt.Sprintf("%s %s", s.defaultMobileCountryCode, mobile)
 		return mobile
 	}
 
@@ -157,6 +157,6 @@ func (a *Auth) FormatMobileNumber(mobile string) string {
 
 // GetUserRoles returns the map of user roles defined in the Auth.
 // It does not take any input parameters and returns a map where the key is Role and the value is the role name.
-func (a *Auth) GetUserRoles() map[Role]string {
-	return a.userRoles
+func (s *Service) GetUserRoles() map[Role]string {
+	return s.userRoles
 }
