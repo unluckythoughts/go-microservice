@@ -108,7 +108,7 @@ func (s *Service) CreateUser(user *User) error {
 // GetUserByID retrieves a user by ID with their addresses
 func (s *Service) GetUserByID(id uint) (*User, error) {
 	var user User
-	err := s.db.Preload("Addresses").First(&user, id).Error
+	err := s.db.First(&user, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
@@ -123,7 +123,7 @@ func (s *Service) GetUserByID(id uint) (*User, error) {
 // GetUserByEmail retrieves a user by email
 func (s *Service) GetUserByEmail(email string) (*User, error) {
 	var user User
-	err := s.db.Preload("Addresses").Where("email = ?", email).First(&user).Error
+	err := s.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
@@ -137,7 +137,7 @@ func (s *Service) GetUserByEmail(email string) (*User, error) {
 // GetUserByMobile retrieves a user by mobile number
 func (s *Service) GetUserByMobile(mobile string) (*User, error) {
 	var user User
-	err := s.db.Preload("Addresses").Where("mobile = ?", mobile).First(&user).Error
+	err := s.db.Where("mobile = ?", mobile).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
@@ -151,7 +151,7 @@ func (s *Service) GetUserByMobile(mobile string) (*User, error) {
 // GetAllUsers retrieves all users with pagination
 func (s *Service) GetAllUsers(offset, limit int) ([]User, error) {
 	var users []User
-	err := s.db.Preload("Addresses").Offset(offset).Limit(limit).Find(&users).Error
+	err := s.db.Offset(offset).Limit(limit).Find(&users).Error
 	utils.ClearValues(&users, "Password", "GoogleID")
 	return users, err
 }
