@@ -163,7 +163,7 @@ func (s *Service) GetUserHandler(r web.Request) (any, error) {
 		return nil, err
 	}
 
-	return s.getAuthResponse(r.GetContext(), user)
+	return user, nil
 }
 
 // UpdateUserHandler handles user profile update requests
