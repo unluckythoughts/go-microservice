@@ -1,10 +1,12 @@
 package bus
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -35,36 +37,41 @@ type IBus interface {
 
 type queueService struct {
 	l   *zap.Logger
-	sqs *sqs.SQS
+	sqs *sqs.Client
 }
 
-func sanityCheck(q *sqs.SQS) {
+func sanityCheck(q *sqs.Client) {
 	params := sqs.ListQueuesInput{}
-	_, err := q.ListQueues(&params)
+	_, err := q.ListQueues(context.Background(), &params)
 	if err != nil {
 		panic(errors.Wrapf(err, "could not connect to sqs"))
 	}
 }
 
 func New(opts Options) IBus {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
+	ctx := context.Background()
+	loadOptions := []func(*config.LoadOptions) error{
+		config.WithRegion(opts.Region),
+	}
 
-	conf := aws.NewConfig()
 	if opts.Environment == EnvironmentLocal {
-		conf.WithEndpoint(opts.EndpointURL)
-		conf.WithRegion(opts.Region)
-		conf.WithCredentials(credentials.NewStaticCredentials(
-			opts.AccessKeyID, opts.SecretAccessKey, opts.SessionToken))
-	}
-	conf.WithDisableSSL(opts.DisableSSL)
-	conf.WithLogger(&queueLogger{opts.Logger})
-	if opts.Debug {
-		conf.WithLogLevel(aws.LogDebug)
+		loadOptions = append(loadOptions,
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+				opts.AccessKeyID, opts.SecretAccessKey, opts.SessionToken,
+			)),
+		)
 	}
 
-	q := sqs.New(sess, conf)
+	cfg, err := config.LoadDefaultConfig(ctx, loadOptions...)
+	if err != nil {
+		panic(errors.Wrap(err, "could not load AWS config"))
+	}
+
+	q := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
+		if opts.Environment == EnvironmentLocal {
+			o.BaseEndpoint = aws.String(opts.EndpointURL)
+		}
+	})
 
 	sanityCheck(q)
 	opts.Logger.Info("Connected to SQS")
@@ -73,9 +80,9 @@ func New(opts Options) IBus {
 
 func (qs *queueService) getQueueURL(name string) (url *string, err error) {
 	params := sqs.GetQueueUrlInput{
-		QueueName: &name,
+		QueueName: aws.String(name),
 	}
-	output, err := qs.sqs.GetQueueUrl(&params)
+	output, err := qs.sqs.GetQueueUrl(context.Background(), &params)
 	if err != nil {
 		return nil, err
 	}

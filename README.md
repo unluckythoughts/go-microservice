@@ -198,7 +198,7 @@ See the [examples](examples/) directory for complete examples:
 Key dependencies include:
 - `gorm.io/gorm`: ORM for database operations
 - `github.com/go-redis/redis/v8`: Redis client
-- `github.com/aws/aws-sdk-go`: AWS SDK for SQS
+- `github.com/aws/aws-sdk-go-v2/service/sqs`: AWS SDK for SQS
 - `go.uber.org/zap`: Structured logging
 - `github.com/julienschmidt/httprouter`: HTTP router
 - `github.com/golang-jwt/jwt/v5`: JWT authentication

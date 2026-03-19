@@ -1,8 +1,11 @@
 package bus
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -13,14 +16,14 @@ type Message struct {
 	Logger *zap.Logger
 }
 
-func (qs *queueService) deleteMessage(url *string, m *sqs.Message) (err error) {
+func (qs *queueService) deleteMessage(url *string, m types.Message) (err error) {
 	params := sqs.DeleteMessageInput{
 		ReceiptHandle: m.ReceiptHandle,
 		QueueUrl:      url,
 	}
-	_, err = qs.sqs.DeleteMessage(&params)
+	_, err = qs.sqs.DeleteMessage(context.Background(), &params)
 	if err != nil {
-		return errors.Wrapf(err, "could not delete message with id: %s", *m.MessageId)
+		return errors.Wrapf(err, "could not delete message with id: %s", aws.ToString(m.MessageId))
 	}
 
 	return nil
@@ -33,11 +36,11 @@ func (qs *queueService) Publish(queueName string, msg Message) (err error) {
 	}
 
 	params := sqs.SendMessageInput{
-		MessageBody: &msg.Body,
+		MessageBody: aws.String(msg.Body),
 		QueueUrl:    url,
 	}
 
-	if _, err := qs.sqs.SendMessage(&params); err != nil {
+	if _, err := qs.sqs.SendMessage(context.Background(), &params); err != nil {
 		return errors.Wrapf(err, "could not publish message onto queue %s", queueName)
 	}
 
@@ -53,11 +56,11 @@ func (qs *queueService) AddHandler(queueName string, handler Handler) (err error
 	go func() {
 		params := sqs.ReceiveMessageInput{
 			QueueUrl:        url,
-			WaitTimeSeconds: aws.Int64(20),
+			WaitTimeSeconds: 20,
 		}
 
 		for {
-			resp, err := qs.sqs.ReceiveMessage(&params)
+			resp, err := qs.sqs.ReceiveMessage(context.Background(), &params)
 			if err != nil {
 				qs.l.Sugar().Errorf("could not receive messages from queue %s. error: %+v", queueName, err)
 			}
@@ -65,11 +68,11 @@ func (qs *queueService) AddHandler(queueName string, handler Handler) (err error
 			for _, m := range resp.Messages {
 				l := qs.l.With(
 					zap.String("queue", queueName),
-					zap.String("messageId", *m.MessageId),
+					zap.String("messageId", aws.ToString(m.MessageId)),
 				)
 				msg := Message{
-					ID:     *m.MessageId,
-					Body:   *m.Body,
+					ID:     aws.ToString(m.MessageId),
+					Body:   aws.ToString(m.Body),
 					Logger: l,
 				}
 
