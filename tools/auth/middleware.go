@@ -149,7 +149,7 @@ func (s *Service) EnsureRole(role Role) web.Middleware {
 			return err
 		}
 
-		if user.Role >= role {
+		if user.Role < role {
 			return web.NewError(http.StatusForbidden, fmt.Errorf("forbidden: You do not have permission to access this resource"))
 		}
 
