@@ -209,11 +209,15 @@ func (r *router) getRouterHandlerForPath(path string, handlers []any) httprouter
 
 		baseLogger := req.ctx.l
 		for _, middleware := range middlewares {
-			req.ctx.l = baseLogger.With(zap.String("fn", getFuncName(middleware)))
-			if err := middleware(req); err != nil {
+			mwReq := *req
+			mwCtx := *req.ctx
+			mwCtx.l = baseLogger.With(zap.String("fn", getFuncName(middleware)))
+			mwReq.ctx = &mwCtx
+			if err := middleware(&mwReq); err != nil {
 				sendResponse(resp, nil, err, 500)
 				return
 			}
+			req.ctx = mwReq.ctx
 		}
 
 		req.ctx.l = baseLogger
