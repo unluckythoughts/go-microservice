@@ -1,5 +1,5 @@
 .ONESHELL:
-SHELL := $(shell which bash 2>/dev/null || which sh)
+SHELL := $(or $(shell command -v bash),$(shell command -v sh))
 
 DOCKER_COMPOSE_FILE=examples/microservice/docker-compose.yml
 DOCKERFILE=examples/microservice/Dockerfile
