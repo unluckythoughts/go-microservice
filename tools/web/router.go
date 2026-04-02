@@ -197,7 +197,7 @@ func (r *router) getRouterHandlerForPath(path string, handlers []any) httprouter
 	}
 
 	pathMiddlewares := r.getMiddlewaresForPath(path)
-	middlewares = append(middlewares, pathMiddlewares...)
+	middlewares = append(pathMiddlewares, middlewares...)
 
 	return httprouter.Handle(func(w http.ResponseWriter, httpReq *http.Request, p httprouter.Params) {
 		if r.cors {

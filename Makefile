@@ -11,6 +11,13 @@ test-setup: stop
 test:
 	go test ./tests/... -v
 
+test-auth:
+	@if [ -n "$(test)" ]; then \
+		go test ./tests/auth/... -v -run $(test); \
+	else \
+		go test ./tests/auth/... -v; \
+	fi
+
 run: test-setup
 
 stop:
