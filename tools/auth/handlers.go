@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/unluckythoughts/go-microservice/v2/tools/web"
+	"github.com/unluckythoughts/go-microservice/v2/utils"
 	"gorm.io/gorm"
 )
 
@@ -67,6 +68,21 @@ func (s *Service) SendTokenHandler(r web.Request) (any, error) {
 		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("target is required"))
 	}
 
+	target = strings.TrimSpace(target)
+
+	switch targetType {
+	case "email", "":
+		if !utils.IsEmail(target) {
+			return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid email format"))
+		}
+	case "mobile":
+		if !utils.IsMobile(target) {
+			return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid mobile number format"))
+		}
+	default:
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid target type: must be 'email' or 'mobile'"))
+	}
+
 	token, err := s.CreateVerifyToken(target)
 	if err != nil {
 		return nil, web.NewError(http.StatusInternalServerError, err)
@@ -79,8 +95,6 @@ func (s *Service) SendTokenHandler(r web.Request) (any, error) {
 	case "mobile":
 		r.GetContext().Logger().Info("verification token created for mobile", "mobile", target, "token", token)
 		// TODO: send verification SMS to the user with the token
-	default:
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid target type: must be 'email' or 'mobile'"))
 	}
 
 	return "verification token created successfully", nil
@@ -272,6 +286,21 @@ func (s *Service) ResetPasswordHandler(r web.Request) (any, error) {
 		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("target is required"))
 	}
 
+	target = strings.TrimSpace(target)
+
+	switch targetType {
+	case "email", "":
+		if !utils.IsEmail(target) {
+			return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid email format"))
+		}
+	case "mobile":
+		if !utils.IsMobile(target) {
+			return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid mobile number format"))
+		}
+	default:
+		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid target type: must be 'email' or 'mobile'"))
+	}
+
 	var user User
 	err := s.db.Where("email = ? OR mobile = ?", target, target).First(&user).Error
 	if err != nil {
@@ -307,8 +336,6 @@ func (s *Service) ResetPasswordHandler(r web.Request) (any, error) {
 	case "mobile":
 		r.GetContext().Logger().Info("verification token created for mobile", "mobile", target, "token", token)
 		// TODO: send verification SMS to the user with the token
-	default:
-		return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("invalid target type: must be 'email' or 'mobile'"))
 	}
 
 	return "verification token created successfully", nil
