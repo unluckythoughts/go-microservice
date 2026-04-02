@@ -8,7 +8,7 @@ DOCKER_COMPOSE ?= docker compose
 test-setup: stop
 	$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up --build -d
 
-test-ci: test-setup
+test-ci:
 	docker build -f tests/Dockerfile -t go-microservice-test-ci .
 	docker run --rm \
 	  --network go-microservice-test \
