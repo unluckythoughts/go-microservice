@@ -22,9 +22,9 @@ func (c *Client) ClearBearerToken() {
 	c.client.ClearBearerToken()
 }
 
-func parseData[T any](base web.HTTPResponse) (T, error) {
+func parseData[T any](status int, base web.HTTPResponse) (T, error) {
 	var result T
-	if err := web.HandleResponse(http.StatusOK, nil, base); err != nil {
+	if err := web.HandleResponse(status, nil, base); err != nil {
 		return result, err
 	}
 
@@ -33,8 +33,4 @@ func parseData[T any](base web.HTTPResponse) (T, error) {
 	}
 
 	return result, nil
-}
-
-func parseOnlyResponse(status int, err error, base web.HTTPResponse) error {
-	return web.HandleResponse(status, err, base)
 }

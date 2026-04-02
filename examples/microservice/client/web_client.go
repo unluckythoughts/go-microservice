@@ -11,11 +11,7 @@ import (
 func (c *Client) Hello() (string, int, error) {
 	base := web.HTTPResponse{}
 	status, err := c.client.GetResponse("/hello", &base)
-	if err = parseOnlyResponse(status, err, base); err != nil {
-		return "", status, err
-	}
-
-	data, err := parseData[string](base)
+	data, err := parseData[string](status, base)
 	return data, status, err
 }
 
