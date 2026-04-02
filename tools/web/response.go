@@ -50,6 +50,46 @@ func (r *response) AddHeader(key string, values ...string) {
 	}
 }
 
+// sensitiveKeyPatterns lists substrings that identify sensitive JSON fields.
+var sensitiveKeyPatterns = []string{
+	"password", "passwd", "secret", "token", "apikey", "api_key",
+	"authorization", "credential", "private", "jwt", "ssn", "cvv",
+	"card_number", "cardnumber",
+}
+
+func isSensitiveKey(key string) bool {
+	lk := strings.ToLower(key)
+	for _, pattern := range sensitiveKeyPatterns {
+		if strings.Contains(lk, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+func redactSensitiveFields(data map[string]interface{}) {
+	for k, v := range data {
+		if isSensitiveKey(k) {
+			data[k] = "[REDACTED]"
+		} else if nested, ok := v.(map[string]interface{}); ok {
+			redactSensitiveFields(nested)
+		}
+	}
+}
+
+func sanitizeBody(body string) string {
+	var parsed map[string]interface{}
+	if err := json.Unmarshal([]byte(body), &parsed); err != nil {
+		return body
+	}
+	redactSensitiveFields(parsed)
+	sanitized, err := json.Marshal(parsed)
+	if err != nil {
+		return body
+	}
+	return string(sanitized)
+}
+
 func logResponse(req *request, statusCode int, respBody *bytes.Buffer, respErr error) {
 	method := req._int.Method
 	url := req._int.URL.String()
@@ -66,8 +106,8 @@ func logResponse(req *request, statusCode int, respBody *bytes.Buffer, respErr e
 	fields := []zap.Field{
 		zap.String("p", method+" "+url),
 		zap.Float64("t", duration),
-		zap.String("b", string(req.body.raw)),
-		zap.String("r", resp),
+		zap.String("b", sanitizeBody(string(req.body.raw))),
+		zap.String("r", sanitizeBody(resp)),
 	}
 
 	urlParams := req._int.URL.Query()
