@@ -9,8 +9,6 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Install make
-        run: apk add --no-cache make
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up services
