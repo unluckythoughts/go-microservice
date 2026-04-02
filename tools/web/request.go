@@ -74,6 +74,11 @@ func (r *request) GetContext() Context {
 	return r.ctx
 }
 
+// GetMethod returns the HTTP method of the request
+func (r *request) GetMethod() string {
+	return r._int.Method
+}
+
 // GetPath returns the request path
 // This is the path without the query parameters
 // e.g. /api/v1/users/123

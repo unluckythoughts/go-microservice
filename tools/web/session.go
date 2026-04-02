@@ -110,13 +110,16 @@ func SessionMiddleware(store SessionStore) Middleware {
 	return func(req MiddlewareRequest) error {
 		session, err := store.Get(req.(*request)._int, sessionName)
 		if err != nil {
-			// If session is invalid (e.g., securecookie error), create a new empty session
-			// The router will save this new session at the end of the request,
-			// which will overwrite the invalid cookie
-			session, err = store.New(req.(*request)._int, sessionName)
-			if err != nil {
+			// Gorilla sessions always returns a valid session object alongside a decode
+			// error (e.g. "securecookie: the value is not valid").  Calling store.New()
+			// as a fallback hits the same invalid cookie and produces the same error.
+			// Instead, reset the returned session to a clean state and carry on so the
+			// bad cookie is silently replaced at the end of the request.
+			if session == nil {
 				return err
 			}
+			session.Values = make(map[any]any)
+			session.IsNew = true
 		}
 
 		// Set the session in the request context

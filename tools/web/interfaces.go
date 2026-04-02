@@ -31,6 +31,7 @@ type Request interface {
 	GetValidatedBody(ptr any) error
 	GetHeaders() http.Header
 	GetHeader(key string) string
+	GetMethod() string
 	GetURLParam(key string) string
 	GetRouteParam(key string) string
 	GetPath() string
