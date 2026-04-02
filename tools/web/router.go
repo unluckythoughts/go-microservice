@@ -150,12 +150,15 @@ func (r *router) getMiddlewares(fns []any) (middlewares []Middleware, ok bool) {
 	}
 
 	for _, fn := range fns {
-		middleware, ok := fn.(func(MiddlewareRequest) error)
-		if !ok {
+		switch m := fn.(type) {
+		case Middleware:
+			middlewares = append(middlewares, m)
+		case func(MiddlewareRequest) error:
+			middlewares = append(middlewares, Middleware(m))
+		default:
 			r.l.Error("middleware should be of type web.Middleware")
 			return middlewares, false
 		}
-		middlewares = append(middlewares, Middleware(middleware))
 	}
 
 	return middlewares, true
