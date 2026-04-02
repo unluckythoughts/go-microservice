@@ -24,8 +24,8 @@ func exampleMiddleware(r web.MiddlewareRequest) error {
 
 func exampleHandler(r web.Request) (any, error) {
 	val := r.GetContext().Value("example-key").(string)
-	r.GetContext().Logger().Infof("test log from handler with value: %s", val)
-	r.GetContext().Logger().Errorf("test log from handler with value: %s", val)
+	r.GetContext().Sugar().Infof("test log from handler with value: %s", val)
+	r.GetContext().Sugar().Errorf("test log from handler with value: %s", val)
 
 	return val, nil
 }

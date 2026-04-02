@@ -90,10 +90,10 @@ func (s *Service) SendTokenHandler(r web.Request) (any, error) {
 
 	switch targetType {
 	case "email", "":
-		r.GetContext().Logger().Info("verification token created for email", "email", target, "token", token)
+		r.GetContext().Sugar().Info("verification token created for email", "email", target, "token", token)
 		// TODO: send verification email to the user with the token
 	case "mobile":
-		r.GetContext().Logger().Info("verification token created for mobile", "mobile", target, "token", token)
+		r.GetContext().Sugar().Info("verification token created for mobile", "mobile", target, "token", token)
 		// TODO: send verification SMS to the user with the token
 	}
 
@@ -331,10 +331,10 @@ func (s *Service) ResetPasswordHandler(r web.Request) (any, error) {
 
 	switch targetType {
 	case "email", "":
-		r.GetContext().Logger().Info("verification token created for email", "email", target, "token", token)
+		r.GetContext().Sugar().Info("verification token created for email", "email", target, "token", token)
 		// TODO: send verification email to the user with the token
 	case "mobile":
-		r.GetContext().Logger().Info("verification token created for mobile", "mobile", target, "token", token)
+		r.GetContext().Sugar().Info("verification token created for mobile", "mobile", target, "token", token)
 		// TODO: send verification SMS to the user with the token
 	}
 

@@ -1,9 +1,10 @@
-package web
+package sessions
 
 import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 	"github.com/unluckythoughts/go-microservice/v2/utils"
 	"go.uber.org/zap"
 )
@@ -14,9 +15,9 @@ var (
 )
 
 type (
-	// SessionStore interface for session management
+	// Store interface for session management
 	// TODO: add redis store to save sessions
-	SessionStore interface {
+	Store interface {
 		// Get retrieves a session for the given request
 		Get(req *http.Request, key string) (*sessions.Session, error)
 		// Save saves the session for the given request and response writer
@@ -25,8 +26,8 @@ type (
 		New(req *http.Request, key string) (*sessions.Session, error)
 	}
 
-	// SessionOptions contains configuration for session management
-	SessionOptions struct {
+	// Options contains configuration for session management
+	Options struct {
 		// Name is the name of the session cookie
 		Name string `env:"SESSION_NAME" envDefault:"session"`
 		// SecretKey is the key used to sign the session cookie
@@ -64,8 +65,8 @@ func (s *sessionStore) Save(req *http.Request, resp http.ResponseWriter, value *
 	return s.store.Save(req, resp, value)
 }
 
-// NewSessionStore creates a new session store with the given options
-func NewSessionStore(opts SessionOptions) SessionStore {
+// NewStore creates a new session store with the given options
+func NewStore(opts Options) Store {
 	var secretKey []byte
 
 	if opts.SecretKey != "" {
@@ -105,10 +106,10 @@ func NewSessionStore(opts SessionOptions) SessionStore {
 	}
 }
 
-// SessionMiddleware creates a middleware that injects session management into the request context
-func SessionMiddleware(store SessionStore) Middleware {
-	return func(req MiddlewareRequest) error {
-		session, err := store.Get(req.(*request)._int, sessionName)
+// GetMiddleware creates a middleware that injects session management into the request context
+func GetMiddleware(store Store) web.Middleware {
+	return func(req web.MiddlewareRequest) error {
+		session, err := store.Get(req.GetInternalRequest(), sessionName)
 		if err != nil {
 			// Gorilla sessions always returns a valid session object alongside a decode
 			// error (e.g. "securecookie: the value is not valid").  Calling store.New()

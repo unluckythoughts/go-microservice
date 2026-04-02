@@ -6,8 +6,11 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/unluckythoughts/go-microservice/v2/tools/bus"
 	"github.com/unluckythoughts/go-microservice/v2/tools/cache"
+	"github.com/unluckythoughts/go-microservice/v2/tools/context"
 	"github.com/unluckythoughts/go-microservice/v2/tools/logger"
 	"github.com/unluckythoughts/go-microservice/v2/tools/psql"
+	"github.com/unluckythoughts/go-microservice/v2/tools/ratelimiter"
+	"github.com/unluckythoughts/go-microservice/v2/tools/sessions"
 	"github.com/unluckythoughts/go-microservice/v2/tools/sockets"
 	"github.com/unluckythoughts/go-microservice/v2/tools/sqlite"
 	"github.com/unluckythoughts/go-microservice/v2/tools/web"
@@ -32,12 +35,13 @@ type (
 	}
 
 	Options struct {
-		Name           string `env:"SERVICE_NAME" envDefault:"true"`
-		EnableDB       bool   `env:"SERVICE_ENABLE_DB" envDefault:"true"`
-		DBType         string `env:"SERVICE_DB_TYPE" envDefault:"postgresql"`
-		EnableCache    bool   `env:"SERVICE_ENABLE_CACHE" envDefault:"false"`
-		EnableBus      bool   `env:"SERVICE_ENABLE_BUS" envDefault:"false"`
-		ProxyTransport web.ProxyTransport
+		Name            string `env:"SERVICE_NAME" envDefault:"true"`
+		EnableDB        bool   `env:"SERVICE_ENABLE_DB" envDefault:"true"`
+		DBType          string `env:"SERVICE_DB_TYPE" envDefault:"postgresql"`
+		EnableCache     bool   `env:"SERVICE_ENABLE_CACHE" envDefault:"false"`
+		EnableBus       bool   `env:"SERVICE_ENABLE_BUS" envDefault:"false"`
+		EnableRateLimit bool   `env:"SERVICE_ENABLE_RATE_LIMIT" envDefault:"false"`
+		ProxyTransport  web.ProxyTransport
 	}
 
 	service struct {
@@ -64,7 +68,7 @@ func getLogger() *zap.Logger {
 }
 
 func getWorker(l *zap.Logger, db *gorm.DB) *worker.Worker {
-	return worker.New(web.NewContext(l.Named("worker")), db)
+	return worker.New(context.NewContext(l.Named("worker")), db)
 }
 
 func getServer(l *zap.Logger) *web.Server {
@@ -73,6 +77,14 @@ func getServer(l *zap.Logger) *web.Server {
 	opts.Logger = l
 
 	return web.NewServer(opts)
+}
+
+func getSessionStore(l *zap.Logger) sessions.Store {
+	opts := sessions.Options{}
+	utils.ParseEnvironmentVars(&opts)
+	opts.Logger = l
+
+	return sessions.NewStore(opts)
 }
 
 func getPsqlDB(l *zap.Logger) *gorm.DB {
@@ -147,6 +159,29 @@ func New(opts Options) IService {
 		s.cache = c
 	}
 
+	if opts.EnableRateLimit {
+		if s.cache == nil {
+			l.Fatal("Rate limiting is enabled but cache is not configured")
+		}
+
+		rl := ratelimiter.New(ratelimiter.Options{
+			Cache:  s.cache,
+			Logger: l.Named("rate-limiter"),
+		})
+
+		s.server.GetRouter().Use(rl.GetMiddleware())
+	}
+
+	if s.cache != nil {
+		// TODO: support other cache types for sessions
+		l.Info("TODO: Using cache for session store")
+	}
+
+	store := getSessionStore(l.Named("sessions"))
+	m := sessions.GetMiddleware(store)
+
+	s.server.GetRouter().Use(m)
+
 	return s
 }
 
@@ -176,7 +211,7 @@ func (s *service) GetCache() *redis.Client {
 		return s.cache
 	}
 
-	panic("database is not configured with the service")
+	panic("cache is not configured with the service")
 }
 
 func (s *service) GetBus() bus.IBus {
@@ -184,7 +219,7 @@ func (s *service) GetBus() bus.IBus {
 		return s.bus
 	}
 
-	panic("database is not configured with the service")
+	panic("bus is not configured with the service")
 }
 
 func (s *service) GetWorker() *worker.Worker {

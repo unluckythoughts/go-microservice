@@ -25,7 +25,7 @@ func (s *LoginSuite) TestLogin_Success() {
 		Name:     name,
 	})
 	s.Assert().NoError(err)
-	s.Assert().Equal(http.StatusOK, status, "register should succeed")
+	s.Assert().Equal(http.StatusCreated, status, "register should succeed")
 
 	resp, status, err := s.client.Login(auth.Credentials{
 		Email:    email,
@@ -33,7 +33,7 @@ func (s *LoginSuite) TestLogin_Success() {
 	})
 
 	s.Assert().NoError(err)
-	s.Assert().Equal(http.StatusOK, status)
+	s.Assert().Equal(http.StatusCreated, status)
 	s.Assert().NotEmpty(resp.Token, "expected a JWT token in the login response")
 }
 
@@ -46,7 +46,7 @@ func (s *LoginSuite) TestLogin_InvalidPassword() {
 		Name:     name,
 	})
 	s.Assert().NoError(err)
-	s.Assert().Equal(http.StatusOK, status, "register should succeed")
+	s.Assert().Equal(http.StatusCreated, status, "register should succeed")
 
 	_, status, err = s.client.Login(auth.Credentials{
 		Email:    email,
