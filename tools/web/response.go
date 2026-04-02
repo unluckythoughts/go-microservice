@@ -123,7 +123,7 @@ func logResponse(req *request, statusCode int, respBody *bytes.Buffer, respErr e
 		fields = append(fields, zap.Error(respErr))
 	}
 
-	req.ctx.l.With(fields...).Debug(msg)
+	req.ctx.Logger().With(fields...).Debug(msg)
 }
 
 // sendResponse function to send response to http requests
@@ -138,6 +138,9 @@ func sendResponse(resp *response, data interface{}, respErr error, statusCode in
 	resp.respWriter.Header().Set("Content-Type", "application/json")
 	if respErr == nil {
 		statusCode = 200
+		if resp.request.GetMethod() == http.MethodPost {
+			statusCode = 201
+		}
 		base.Error = ""
 		base.Data = data
 	} else if e, ok := respErr.(*httpError); ok {

@@ -1,4 +1,4 @@
-package web
+package context
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -15,13 +16,19 @@ const (
 
 type Context interface {
 	context.Context
-	Logger() *zap.SugaredLogger
+	Logger() *zap.Logger
+	Sugar() *zap.SugaredLogger
+	SetLogger(logger *zap.Logger)
+	GetSession() *sessions.Session
 	SetSession(session *sessions.Session)
 	GetSessionValue(key string) (any, error)
 	PutSessionValue(key string, value any) error
 	ClearSession() error
 	Cancel()
 	WithTimeout(duration time.Duration) Context
+	StartTime() time.Time
+	WithFields(fields ...zapcore.Field)
+	WithValue(key any, value any) error
 }
 
 type ctx struct {
@@ -62,8 +69,32 @@ func (c *ctx) Cancel() {
 	}
 }
 
-func (c *ctx) Logger() *zap.SugaredLogger {
+func (c *ctx) Logger() *zap.Logger {
+	return c.l
+}
+
+func (c *ctx) Sugar() *zap.SugaredLogger {
 	return c.l.Sugar()
+}
+
+func (c *ctx) SetLogger(logger *zap.Logger) {
+	c.l = logger
+}
+
+func (c *ctx) StartTime() time.Time {
+	return c.st
+}
+
+func (c *ctx) WithFields(fields ...zapcore.Field) {
+	c.l = c.l.With(fields...)
+}
+
+func (c *ctx) WithValue(key any, value any) error {
+	if c.Value(key) != nil {
+		return errors.New("key already exists in context")
+	}
+	c.Context = context.WithValue(c.Context, key, value)
+	return nil
 }
 
 func (c *ctx) GetSessionValue(key string) (any, error) {
@@ -94,6 +125,14 @@ func (c *ctx) PutSessionValue(key string, value any) error {
 
 func (c *ctx) SetSession(session *sessions.Session) {
 	c.Context = context.WithValue(c, sessionContextKey, session)
+}
+
+func (c *ctx) GetSession() *sessions.Session {
+	session, ok := c.Value(sessionContextKey).(*sessions.Session)
+	if !ok {
+		return nil
+	}
+	return session
 }
 
 func (c *ctx) ClearSession() error {

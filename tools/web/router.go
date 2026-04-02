@@ -7,10 +7,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gorilla/sessions"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
-	"github.com/unluckythoughts/go-microservice/v2/utils"
 	"go.uber.org/zap"
 )
 
@@ -20,11 +18,10 @@ type (
 	Middleware func(MiddlewareRequest) error
 
 	router struct {
-		_int         *httprouter.Router
-		l            *zap.Logger
-		cors         bool
-		middlewares  map[string][]Middleware
-		sessionStore SessionStore
+		_int        *httprouter.Router
+		l           *zap.Logger
+		cors        bool
+		middlewares map[string][]Middleware
 	}
 )
 
@@ -58,24 +55,14 @@ func (r *router) log(w http.ResponseWriter, req *http.Request, p httprouter.Para
 	r.l.Info(p.ByName("message"))
 }
 
-// getSessionStore returns a new session store based on the provided logger
-func getSessionStore(l *zap.Logger) SessionStore {
-	sessionOpts := SessionOptions{}
-	utils.ParseEnvironmentVars(&sessionOpts)
-	sessionOpts.Logger = l
-	return NewSessionStore(sessionOpts)
-}
-
 // newRouter creates a new router with the provided options
 func newRouter(opts Options) *router {
 	r := &router{
-		_int:         httprouter.New(),
-		l:            opts.Logger.Named("router"),
-		cors:         opts.EnableCORS,
-		sessionStore: getSessionStore(opts.Logger.Named("session")),
+		_int: httprouter.New(),
+		l:    opts.Logger.Named("router"),
+		cors: opts.EnableCORS,
 	}
 
-	r.Use(SessionMiddleware(r.sessionStore))
 	r.attachBasicHandlers(opts.EnableCORS)
 	return r
 }
@@ -207,12 +194,11 @@ func (r *router) getRouterHandlerForPath(path string, handlers []any) httprouter
 		req := r.newRequest(httpReq, p)
 		resp := &response{request: req, respWriter: w}
 
-		baseLogger := req.ctx.l
+		baseLogger := req.ctx.Logger()
 		for _, middleware := range middlewares {
 			mwReq := *req
-			mwCtx := *req.ctx
-			mwCtx.l = baseLogger.With(zap.String("fn", getFuncName(middleware)))
-			mwReq.ctx = &mwCtx
+			mwCtx := (*req).ctx
+			mwCtx.WithFields(zap.String("fn", getFuncName(middleware)))
 			if err := middleware(&mwReq); err != nil {
 				sendResponse(resp, nil, err, 500)
 				return
@@ -220,12 +206,12 @@ func (r *router) getRouterHandlerForPath(path string, handlers []any) httprouter
 			req.ctx = mwReq.ctx
 		}
 
-		req.ctx.l = baseLogger
+		req.ctx.SetLogger(baseLogger)
 		data, err := handler(req)
 
-		session := req.ctx.Value(sessionContextKey).(*sessions.Session)
+		session := req.ctx.GetSession()
 		if session != nil {
-			r.sessionStore.Save(httpReq, w, session)
+			session.Store().Save(httpReq, w, session)
 		}
 
 		if err != nil {

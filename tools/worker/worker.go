@@ -6,18 +6,18 @@ import (
 	"time"
 
 	"github.com/robfig/cron/v3"
-	"github.com/unluckythoughts/go-microservice/v2/tools/web"
+	"github.com/unluckythoughts/go-microservice/v2/tools/context"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 // TaskFunc is a function type for background tasks
-type TaskFunc func(ctx web.Context) error
+type TaskFunc func(ctx context.Context) error
 
 // Worker manages background tasks and cron jobs
 type Worker struct {
 	cron      *cron.Cron
-	ctx       web.Context
+	ctx       context.Context
 	db        *gorm.DB
 	wg        sync.WaitGroup
 	enableDL  bool // enable distributed locking
@@ -26,7 +26,7 @@ type Worker struct {
 }
 
 // New creates a new Worker instance
-func New(c web.Context, db *gorm.DB) *Worker {
+func New(c context.Context, db *gorm.DB) *Worker {
 	w := &Worker{
 		cron:  cron.New(cron.WithSeconds()),
 		ctx:   c,
@@ -36,7 +36,7 @@ func New(c web.Context, db *gorm.DB) *Worker {
 	if db != nil {
 		// Enable distributed locking if a database is postgres
 		if db.Dialector.Name() == "postgres" {
-			c.Logger().Info("Distributed locking enabled for worker tasks")
+			c.Sugar().Info("Distributed locking enabled for worker tasks")
 			w.db = db
 			w.enableDL = true
 		}
@@ -45,7 +45,7 @@ func New(c web.Context, db *gorm.DB) *Worker {
 }
 
 func (w *Worker) Logger(name string) *zap.SugaredLogger {
-	l := w.ctx.Logger().With("task", name)
+	l := w.ctx.Sugar().With("task", name)
 	return l
 }
 

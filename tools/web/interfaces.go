@@ -2,6 +2,8 @@ package web
 
 import (
 	"net/http"
+
+	"github.com/unluckythoughts/go-microservice/v2/tools/context"
 )
 
 // Router interface implementing general router
@@ -35,13 +37,15 @@ type Request interface {
 	GetURLParam(key string) string
 	GetRouteParam(key string) string
 	GetPath() string
-	GetContext() Context
+	GetContext() context.Context
+	GetInternalRequest() *http.Request
+	GetRemoteAddr() string
 }
 
 // MiddlewareRequest interface implementing general middleware request
 type MiddlewareRequest interface {
 	Request
-	SetContextValue(key any, value any) error
+	SetContextValue(key string, value any) error
 }
 
 // Response interface implementing general server response

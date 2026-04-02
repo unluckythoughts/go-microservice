@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	localcontext "github.com/unluckythoughts/go-microservice/v2/tools/context"
 	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 )
 
-func (s *Service) getAuthResponse(ctx web.Context, user *User) (LoginResponse, error) {
+func (s *Service) getAuthResponse(ctx localcontext.Context, user *User) (LoginResponse, error) {
 	resp := LoginResponse{}
 
 	err := ctx.PutSessionValue("user_id", user.ID)

@@ -37,8 +37,8 @@ func (s *Suite) newUser(t *testing.T) (*auth.User, error) {
 	if regErr != nil {
 		return nil, fmt.Errorf("registration failed: %w", regErr)
 	}
-	if status != http.StatusOK {
-		return nil, fmt.Errorf("expected status 200, got %d", status)
+	if status != http.StatusCreated {
+		return nil, fmt.Errorf("expected status 201, got %d", status)
 	}
 
 	return s.getUser(t, email)
@@ -60,8 +60,8 @@ func (s *Suite) loginUser(t *testing.T, email, password string) (string, error) 
 	if err != nil {
 		return "", fmt.Errorf("login failed: %w", err)
 	}
-	if status != http.StatusOK {
-		return "", fmt.Errorf("expected status 200, got %d", status)
+	if status != http.StatusCreated {
+		return "", fmt.Errorf("expected status 201, got %d", status)
 	}
 	if resp.Token == "" {
 		return "", fmt.Errorf("expected a JWT token in the login response")

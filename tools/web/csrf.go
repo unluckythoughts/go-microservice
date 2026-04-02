@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/unluckythoughts/go-microservice/v2/tools/context"
 	"github.com/unluckythoughts/go-microservice/v2/utils"
 )
 
@@ -20,7 +21,7 @@ const (
 // the session, and returns the token string.  Call this after a user authenticates
 // and include the returned value in the login response so the client can supply it
 // on subsequent state-changing requests.
-func GenerateCSRFToken(ctx Context) (string, error) {
+func GenerateCSRFToken(ctx context.Context) (string, error) {
 	token, err := utils.GenerateRandomString(64)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate CSRF token: %w", err)

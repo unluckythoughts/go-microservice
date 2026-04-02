@@ -1,18 +1,19 @@
 package web
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gofrs/uuid"
 	"github.com/julienschmidt/httprouter"
+	localcontext "github.com/unluckythoughts/go-microservice/v2/tools/context"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -28,7 +29,7 @@ type request struct {
 	routeParams *httprouter.Params
 	id          string
 	body        reqBody
-	ctx         *ctx
+	ctx         localcontext.Context
 }
 
 // newRequest creates a new request object with the given http request and httprouter params
@@ -41,36 +42,36 @@ func (r *router) newRequest(req *http.Request, p httprouter.Params) *request {
 		routeParams: &p,
 		id:          reqID,
 		body:        reqBody{},
-		ctx:         NewContext(l),
+		ctx:         localcontext.NewContext(l),
 	}
 }
 
 // timeElapsed returns the time elapsed since the request was created and the time in milliseconds
 func (r *request) timeElapsed() (string, float64) {
-	d := time.Since(r.ctx.st)
+	d := time.Since(r.ctx.StartTime())
 	floatD := float64(d.Nanoseconds()) / math.Pow10(6)
 	return d.String(), floatD
 }
 
 // With adds the given fields to the request context logger
 func (r *request) With(fields ...zapcore.Field) {
-	r.ctx.l = r.ctx.l.With(fields...)
+	r.ctx.WithFields(fields...)
 }
 
 // SetContextValue sets a value in the request context with the given key
 // returns an error if the key already exists in the context
-func (r *request) SetContextValue(cKey any, cValue any) error {
+func (r *request) SetContextValue(cKey string, cValue any) error {
 	if r.ctx.Value(cKey) != nil {
 		return errors.New("key already exists in context")
 	}
 
 	// nolint:staticcheck
-	r.ctx.Context = context.WithValue(r.ctx, cKey, cValue)
+	r.ctx.WithValue(cKey, cValue)
 	return nil
 }
 
 // GetContext returns the request context
-func (r *request) GetContext() Context {
+func (r *request) GetContext() localcontext.Context {
 	return r.ctx
 }
 
@@ -128,4 +129,17 @@ func (r *request) GetURLParam(key string) string {
 // GetRouteParam returns the route param value with the given key
 func (r *request) GetRouteParam(key string) string {
 	return r.routeParams.ByName(key)
+}
+
+// GetRemoteAddr returns the remote address of the client (IP only, port stripped)
+func (r *request) GetRemoteAddr() string {
+	addr := r._int.RemoteAddr
+	if i := strings.LastIndex(addr, ":"); i > 0 {
+		return addr[:i]
+	}
+	return addr
+}
+
+func (r *request) GetInternalRequest() *http.Request {
+	return r._int
 }

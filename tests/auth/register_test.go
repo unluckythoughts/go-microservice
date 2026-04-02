@@ -26,7 +26,7 @@ func (s *RegisterSuite) TestRegister_Success() {
 	})
 
 	s.Assert().NoError(err)
-	s.Assert().Equal(http.StatusOK, status)
+	s.Assert().Equal(http.StatusCreated, status)
 }
 
 func (s *RegisterSuite) TestRegister_DuplicateEmail() {
@@ -38,7 +38,7 @@ func (s *RegisterSuite) TestRegister_DuplicateEmail() {
 		Name:     name,
 	})
 	s.Assert().NoError(err)
-	s.Assert().Equal(http.StatusOK, status, "first registration should succeed")
+	s.Assert().Equal(http.StatusCreated, status, "first registration should succeed")
 
 	_, status, err = s.client.Register(auth.RegisterRequest{
 		Email:    email,
