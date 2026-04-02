@@ -1,4 +1,4 @@
-module example
+module github.com/unluckythoughts/go-microservice/v2/examples/microservice
 
 go 1.26.1
 

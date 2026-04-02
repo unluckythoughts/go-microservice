@@ -6,6 +6,24 @@ import (
 	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 )
 
+// extractData unmarshals the Data field of an HTTPResponse into T.
+// It propagates network/decoding errors but does NOT treat HTTP 4xx/5xx as Go
+// errors — callers should inspect the returned status code instead.
+func extractData[T any](base web.HTTPResponse, status int, err error) (T, int, error) {
+	var zero T
+	if err != nil {
+		return zero, status, err
+	}
+	if !base.Ok || base.Data == nil {
+		return zero, status, nil
+	}
+	var result T
+	if marshalErr := web.MarshalData(base.Data, &result); marshalErr != nil {
+		return zero, status, marshalErr
+	}
+	return result, status, nil
+}
+
 type client struct {
 	c web.Client
 }
@@ -34,59 +52,59 @@ func AttachAuthMethods(c web.Client) ClientWithAuth {
 }
 
 func (cl *client) Login(req Credentials) (LoginResponse, int, error) {
-	var resp LoginResponse
-	status, err := cl.c.PostResponse("/auth/login", req, &resp)
-	return resp, status, err
+	var base web.HTTPResponse
+	status, err := cl.c.PostResponse("/auth/login", req, &base)
+	return extractData[LoginResponse](base, status, err)
 }
 
 func (cl *client) Register(req RegisterRequest) (string, int, error) {
-	var message string
-	status, err := cl.c.PostResponse("/auth/register", req, &message)
-	return message, status, err
+	var base web.HTTPResponse
+	status, err := cl.c.PostResponse("/auth/register", req, &base)
+	return extractData[string](base, status, err)
 }
 
 func (cl *client) Logout() (string, int, error) {
-	var message string
-	status, err := cl.c.GetResponse("/auth/logout", &message)
-	return message, status, err
+	var base web.HTTPResponse
+	status, err := cl.c.GetResponse("/auth/logout", &base)
+	return extractData[string](base, status, err)
 }
 
 func (cl *client) ResetPassword(target, targetType string) (string, int, error) {
 	url := "/auth/reset-password/" + target + "?type=" + targetType
-	var message string
-	status, err := cl.c.PatchResponse(url, nil, &message)
-	return message, status, err
+	var base web.HTTPResponse
+	status, err := cl.c.PatchResponse(url, nil, &base)
+	return extractData[string](base, status, err)
 }
 
 func (cl *client) UpdatePassword(req UpdatePasswordRequest) (string, int, error) {
-	var message string
-	status, err := cl.c.PostResponse("/auth/update-password", req, &message)
-	return message, status, err
+	var base web.HTTPResponse
+	status, err := cl.c.PutResponse("/auth/update-password", req, &base)
+	return extractData[string](base, status, err)
 }
 
 func (cl *client) ChangePassword(req ChangePasswordRequest) (string, int, error) {
-	var message string
-	status, err := cl.c.PostResponse("/auth/change-password", req, &message)
-	return message, status, err
+	var base web.HTTPResponse
+	status, err := cl.c.PutResponse("/auth/change-password", req, &base)
+	return extractData[string](base, status, err)
 }
 
 func (cl *client) VerifyToken(target, token string) (bool, int, error) {
 	url := "/auth/verify/" + target + "/" + token
-	var resp bool
-	status, err := cl.c.GetResponse(url, &resp)
-	return resp, status, err
+	var base web.HTTPResponse
+	status, err := cl.c.GetResponse(url, &base)
+	return extractData[bool](base, status, err)
 }
 
 func (cl *client) GetUser() (LoginResponse, int, error) {
-	var resp LoginResponse
-	status, err := cl.c.GetResponse("/auth/user", &resp)
-	return resp, status, err
+	var base web.HTTPResponse
+	status, err := cl.c.GetResponse("/auth/user", &base)
+	return extractData[LoginResponse](base, status, err)
 }
 
 func (cl *client) UpdateUser(req UpdateUserRequest) (string, int, error) {
-	var message string
-	status, err := cl.c.PutResponse("/auth/user", req, &message)
-	return message, status, err
+	var base web.HTTPResponse
+	status, err := cl.c.PutResponse("/auth/user", req, &base)
+	return extractData[string](base, status, err)
 }
 
 // Helper methods to satisfy the web.Client interface for the embedded client

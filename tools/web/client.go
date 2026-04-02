@@ -50,6 +50,8 @@ func NewClient(baseURL string, defaultHeaders ...http.Header) Client {
 
 	if len(defaultHeaders) > 0 {
 		c.Headers = defaultHeaders[0]
+	} else {
+		c.Headers = http.Header{}
 	}
 
 	c.Headers.Add("Content-Type", "application/json")

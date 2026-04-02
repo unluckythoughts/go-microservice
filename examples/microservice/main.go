@@ -87,7 +87,7 @@ func main() {
 	})
 	
 	r := s.HttpRouter()
-	auth.RegisterAuthRoutes(r, "/api/v1/auth", as, UserRole)
+	auth.RegisterAuthRoutes(r, "/api/v1/", as, UserRole)
 	r.GET("/api/v1/example", exampleMiddleware, exampleHandler)
 	s.Start()
 }

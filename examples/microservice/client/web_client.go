@@ -6,7 +6,7 @@ import (
 
 func (c *Client) Example() (string, int, error) {
 	base := web.HTTPResponse{}
-	status, err := c.GetResponse("/api/v1/example", &base)
+	status, err := c.GetResponse("/example", &base)
 	data, err := web.GetResponseData[string](status, base)
 	return data, status, err
 }

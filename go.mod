@@ -61,3 +61,7 @@ require (
 	golang.org/x/text v0.34.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+require github.com/unluckythoughts/go-microservice/v2/examples/microservice v0.0.0
+
+replace github.com/unluckythoughts/go-microservice/v2/examples/microservice => ./examples/microservice
