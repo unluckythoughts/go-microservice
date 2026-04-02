@@ -2,8 +2,10 @@ package auth
 
 import (
 	"errors"
+	"net/http"
 	"time"
 
+	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 	"github.com/unluckythoughts/go-microservice/v2/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -352,7 +354,7 @@ func (s *Service) ChangeUserPassword(userID uint, oldPassword, newPassword Passw
 		return err
 	}
 	if !isValid {
-		return errors.New("invalid current password")
+		return web.NewError(http.StatusBadRequest, errors.New("old password is incorrect"))
 	}
 
 	// Update with new password

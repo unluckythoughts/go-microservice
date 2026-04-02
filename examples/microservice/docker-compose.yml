@@ -1,35 +1,86 @@
-version: "3.5"
+name: go-microservice-test
 
 services:
-  example-db:
-    image: "postgres:latest"
-    hostname: "example-db"
-    container_name: "example-db"
+  service:
+    build:
+      context: ../..
+      dockerfile: examples/microservice/Dockerfile
+    hostname: "service"
+    container_name: "service"
+    networks:
+      - go-microservice-test
     environment:
-      POSTGRES_USER: "example"
-      POSTGRES_PASSWORD: "example"
-      POSTGRES_DB: "example"
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=test
+      - DB_PASSWORD=test
+      - DB_NAME=test
+      - CACHE_HOST=cache
+      - CACHE_PORT=6379
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
+      - QUEUE_ENDPOINT_URL=http://bus:9324
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://service:8080/_status"]
+      interval: 30s
+      timeout: 3s
+      retries: 10
+      start_period: 2s
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+      bus:
+        condition: service_healthy
+
+  db:
+    image: "postgres:17-alpine"
+    hostname: "db"
+    container_name: "db"
+    networks:
+      - go-microservice-test
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_USER: "test"
+      POSTGRES_PASSWORD: "test"
+      POSTGRES_DB: "test"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
-  example-redis:
-    image: "bitnami/redis:latest"
-    hostname: "example-redis"
-    container_name: "example-redis"
-    ports:
-      - "6379:6379"
+  cache:
+    image: "redis:alpine"
+    hostname: "cache"
+    container_name: "cache"
+    networks:
+      - go-microservice-test
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
 
-  example-stack:
-    image: "localstack/localstack"
-    hostname: "example-stack"
-    container_name: "example-stack"
-    environment:
-      - DOCKER_HOST=unix:///var/run/docker.sock
-      - DEBUG=1
-      - SERVICES=sqs
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "4566:4566"
+  bus:
+    image: "softwaremill/elasticmq-native:latest"
+    hostname: "bus"
+    container_name: "bus"
+    networks:
+      - go-microservice-test
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9324/?Action=ListQueues || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+networks:
+  go-microservice-test:
+    name: go-microservice-test

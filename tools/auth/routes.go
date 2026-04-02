@@ -21,13 +21,15 @@ func RegisterAuthRoutes(r web.Router, prefix string, as *Service, userRole Role)
 	// Auth routes
 	r.POST(prefix+"/auth/login", as.LoginHandler)
 	r.POST(prefix+"/auth/register", as.GetRegisterHandlerForUserRole(userRole))
+	r.GET(prefix+"/auth/verify/:target/:token", as.VerifyTokenHandler)
+	r.PUT(prefix+"/auth/update-password", as.UpdatePasswordHandler)
+
+	// Protected auth routes
 	r.GET(prefix+"/auth/logout", as.EnsureRole(userRole), as.LogoutHandler)
 
 	// Password reset and update routes
 	r.PATCH(prefix+"/auth/reset-password/:target", as.EnsureRole(userRole), as.ResetPasswordHandler)
-	r.PUT(prefix+"/auth/update-password", as.EnsureRole(userRole), as.UpdatePasswordHandler)
 	r.PUT(prefix+"/auth/change-password", as.EnsureRole(userRole), as.ChangePasswordHandler)
-	r.GET(prefix+"/auth/verify/:target/:token", as.EnsureRole(userRole), as.VerifyTokenHandler)
 
 	// User routes
 	r.GET(prefix+"/auth/user", as.EnsureRole(userRole), as.GetUserHandler)

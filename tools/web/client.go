@@ -20,14 +20,14 @@ type Client interface {
 
 	// GetResponse, PostResponse, PutResponse, PatchResponse, DeleteResponse
 	// are convenience methods for sending HTTP requests with the specified method and body.
-	GetResponse(url string, resp interface{}, reqHeaders ...http.Header) (status int, err error)
-	PostResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error)
-	PutResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error)
-	PatchResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error)
-	DeleteResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error)
+	GetResponse(url string, resp any, reqHeaders ...http.Header) (status int, err error)
+	PostResponse(url string, body any, resp any, reqHeaders ...http.Header) (status int, err error)
+	PutResponse(url string, body any, resp any, reqHeaders ...http.Header) (status int, err error)
+	PatchResponse(url string, body any, resp any, reqHeaders ...http.Header) (status int, err error)
+	DeleteResponse(url string, body any, resp any, reqHeaders ...http.Header) (status int, err error)
 	// Send sends an HTTP request with the specified method, URL, body, and headers.
 	// It returns the HTTP status code and an error if the request fails.
-	Send(method, url string, body []byte, resp interface{}, reqHeaders ...http.Header) (status int, err error)
+	Send(method, url string, body []byte, resp any, reqHeaders ...http.Header) (status int, err error)
 }
 
 type client struct {
@@ -50,6 +50,8 @@ func NewClient(baseURL string, defaultHeaders ...http.Header) Client {
 
 	if len(defaultHeaders) > 0 {
 		c.Headers = defaultHeaders[0]
+	} else {
+		c.Headers = http.Header{}
 	}
 
 	c.Headers.Add("Content-Type", "application/json")
@@ -155,7 +157,7 @@ func (c *client) Log(message string) {
 
 func (c *client) Send(
 	method, url string, body []byte,
-	resp interface{}, reqHeaders ...http.Header,
+	resp any, reqHeaders ...http.Header,
 ) (status int, err error) {
 	reqBody := new(bytes.Buffer)
 	_, err = reqBody.Write(body)
@@ -200,11 +202,11 @@ func (c *client) Send(
 	return httpResp.StatusCode, nil
 }
 
-func (c *client) GetResponse(url string, resp interface{}, reqHeaders ...http.Header) (status int, err error) {
+func (c *client) GetResponse(url string, resp any, reqHeaders ...http.Header) (status int, err error) {
 	return c.Send(http.MethodGet, url, emptyBody, resp, reqHeaders...)
 }
 
-func getRequestBody(body interface{}) (reqBody []byte, err error) {
+func getRequestBody(body any) (reqBody []byte, err error) {
 	reqBody = emptyBody
 	if body != nil {
 		reqBody, err = json.Marshal(body)
@@ -213,7 +215,7 @@ func getRequestBody(body interface{}) (reqBody []byte, err error) {
 	return reqBody, err
 }
 
-func (c *client) PostResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error) {
+func (c *client) PostResponse(url string, body any, resp any, reqHeaders ...http.Header) (status int, err error) {
 	reqBody, err := getRequestBody(body)
 	if err != nil {
 		return 0, errors.Wrapf(err, "could not marshal request body: %+v", body)
@@ -222,7 +224,7 @@ func (c *client) PostResponse(url string, body interface{}, resp interface{}, re
 	return c.Send(http.MethodPost, url, reqBody, resp, reqHeaders...)
 }
 
-func (c *client) PutResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error) {
+func (c *client) PutResponse(url string, body any, resp any, reqHeaders ...http.Header) (status int, err error) {
 	reqBody, err := getRequestBody(body)
 	if err != nil {
 		return 0, errors.Wrapf(err, "could not marshal request body: %+v", body)
@@ -231,7 +233,7 @@ func (c *client) PutResponse(url string, body interface{}, resp interface{}, req
 	return c.Send(http.MethodPut, url, reqBody, resp, reqHeaders...)
 }
 
-func (c *client) PatchResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error) {
+func (c *client) PatchResponse(url string, body any, resp any, reqHeaders ...http.Header) (status int, err error) {
 	reqBody, err := getRequestBody(body)
 	if err != nil {
 		return 0, errors.Wrapf(err, "could not marshal request body: %+v", body)
@@ -240,11 +242,24 @@ func (c *client) PatchResponse(url string, body interface{}, resp interface{}, r
 	return c.Send(http.MethodPatch, url, reqBody, resp, reqHeaders...)
 }
 
-func (c *client) DeleteResponse(url string, body interface{}, resp interface{}, reqHeaders ...http.Header) (status int, err error) {
+func (c *client) DeleteResponse(url string, body any, resp any, reqHeaders ...http.Header) (status int, err error) {
 	reqBody, err := getRequestBody(body)
 	if err != nil {
 		return 0, errors.Wrapf(err, "could not marshal request body: %+v", body)
 	}
 
 	return c.Send(http.MethodDelete, url, reqBody, resp, reqHeaders...)
+}
+
+func GetResponseData[T any](status int, resp HTTPResponse) (T, error) {
+	var result T
+	if err := HandleResponse(status, nil, resp); err != nil {
+		return result, err
+	}
+
+	if err := MarshalData(resp.Data, &result); err != nil {
+		return result, err
+	}
+
+	return result, nil
 }

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -78,6 +79,32 @@ func (m *Mobile) Set(value string) error {
 	*m = Mobile(m.String()) // Normalize the mobile number
 	if !m.IsValid() {
 		return fmt.Errorf("invalid mobile number format")
+	}
+	return nil
+}
+
+// Value implements driver.Valuer so that an empty Mobile is stored as SQL NULL.
+func (m Mobile) Value() (driver.Value, error) {
+	v := m.String()
+	if v == "" {
+		return nil, nil
+	}
+	return v, nil
+}
+
+// Scan implements sql.Scanner so that SQL NULL is read back as Mobile("").
+func (m *Mobile) Scan(value interface{}) error {
+	if value == nil {
+		*m = Mobile("")
+		return nil
+	}
+	switch v := value.(type) {
+	case string:
+		*m = Mobile(v)
+	case []byte:
+		*m = Mobile(string(v))
+	default:
+		return fmt.Errorf("mobile: cannot scan type %T", value)
 	}
 	return nil
 }

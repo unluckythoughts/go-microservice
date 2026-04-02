@@ -5,15 +5,16 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    name: Build
+  test:
+    name: Test
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: us-east-1
-    outputs:
-      version_tag: ${{ steps.tag_version.outputs.new_tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+        uses: actions/checkout@v4
+      - name: Set up services
+        run: make run
+      - name: Wait for services to be healthy (5s)
+        run: sleep 5
+      - name: Run tests with race detection
+        run: make test-ci
+      

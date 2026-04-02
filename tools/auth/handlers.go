@@ -276,9 +276,18 @@ func (s *Service) ResetPasswordHandler(r web.Request) (any, error) {
 	err := s.db.Where("email = ? OR mobile = ?", target, target).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, web.NewError(http.StatusBadRequest, fmt.Errorf("user not found for the given target"))
+			return nil, web.NewError(http.StatusNotFound, fmt.Errorf("user not found for the given target"))
 		}
 		return nil, web.NewError(http.StatusInternalServerError, err)
+	}
+
+	currentUser, err := GetAuthenticatedUser(r)
+	if err != nil {
+		return nil, web.NewError(http.StatusUnauthorized, err)
+	}
+
+	if currentUser.ID != user.ID {
+		return nil, web.NewError(http.StatusForbidden, fmt.Errorf("cannot reset password for another user"))
 	}
 
 	target, targetType, err = getResetTarget(&user, targetType)

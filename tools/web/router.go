@@ -150,12 +150,15 @@ func (r *router) getMiddlewares(fns []any) (middlewares []Middleware, ok bool) {
 	}
 
 	for _, fn := range fns {
-		middleware, ok := fn.(func(MiddlewareRequest) error)
-		if !ok {
+		switch m := fn.(type) {
+		case Middleware:
+			middlewares = append(middlewares, m)
+		case func(MiddlewareRequest) error:
+			middlewares = append(middlewares, Middleware(m))
+		default:
 			r.l.Error("middleware should be of type web.Middleware")
 			return middlewares, false
 		}
-		middlewares = append(middlewares, Middleware(middleware))
 	}
 
 	return middlewares, true
@@ -194,7 +197,7 @@ func (r *router) getRouterHandlerForPath(path string, handlers []any) httprouter
 	}
 
 	pathMiddlewares := r.getMiddlewaresForPath(path)
-	middlewares = append(middlewares, pathMiddlewares...)
+	middlewares = append(pathMiddlewares, middlewares...)
 
 	return httprouter.Handle(func(w http.ResponseWriter, httpReq *http.Request, p httprouter.Params) {
 		if r.cors {
