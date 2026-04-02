@@ -90,6 +90,10 @@ func ValidateStruct(s interface{}) error {
 	return err
 }
 
+func IsEmail(email string) bool {
+	return govalidator.IsEmail(strings.TrimSpace(email))
+}
+
 func IsMobile(mobile string) bool {
 	if mobile == "" {
 		return false
