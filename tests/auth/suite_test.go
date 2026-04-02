@@ -2,24 +2,19 @@ package auth_integration_test
 
 import (
 	"fmt"
-	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/unluckythoughts/go-microservice/v2/examples/microservice/client"
 )
 
-type AuthSuite struct {
+type Suite struct {
 	suite.Suite
 	client *client.Client
 }
 
-func (s *AuthSuite) SetupSuite() {
+func (s *Suite) SetupSuite() {
 	s.client = client.NewClient("http://localhost:8080/api/v1/")
-}
-
-func TestAuthSuite(t *testing.T) {
-	suite.Run(t, new(AuthSuite))
 }
 
 func uniqueCredentials() (email, username, password, name string) {

@@ -2,11 +2,21 @@ package auth_integration_test
 
 import (
 	"net/http"
+	"testing"
 
+	"github.com/stretchr/testify/suite"
 	"github.com/unluckythoughts/go-microservice/v2/tools/auth"
 )
 
-func (s *AuthSuite) TestLogin_Success() {
+type LoginSuite struct {
+	Suite
+}
+
+func TestLoginSuite(t *testing.T) {
+	suite.Run(t, new(LoginSuite))
+}
+
+func (s *LoginSuite) TestLogin_Success() {
 	email, _, password, name := uniqueCredentials()
 
 	_, status, err := s.client.Register(auth.RegisterRequest{
@@ -27,7 +37,7 @@ func (s *AuthSuite) TestLogin_Success() {
 	s.Assert().NotEmpty(resp.Token, "expected a JWT token in the login response")
 }
 
-func (s *AuthSuite) TestLogin_InvalidPassword() {
+func (s *LoginSuite) TestLogin_InvalidPassword() {
 	email, _, password, name := uniqueCredentials()
 
 	_, status, err := s.client.Register(auth.RegisterRequest{
@@ -47,7 +57,7 @@ func (s *AuthSuite) TestLogin_InvalidPassword() {
 	s.Assert().NotEqual(http.StatusOK, status, "login with wrong password must be rejected")
 }
 
-func (s *AuthSuite) TestLogin_UnknownEmail() {
+func (s *LoginSuite) TestLogin_UnknownEmail() {
 	_, status, err := s.client.Login(auth.Credentials{
 		Email:    "nobody@nowhere.example.com",
 		Password: auth.Password("TestPass1!"),
