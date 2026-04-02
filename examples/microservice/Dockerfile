@@ -29,8 +29,8 @@ FROM alpine:3.21
 
 WORKDIR /app
 
-# ca-certificates for HTTPS outbound calls; tzdata for timezone support
-RUN apk add --no-cache ca-certificates tzdata
+# ca-certificates for HTTPS outbound calls; tzdata for timezone support; curl for healthcheck
+RUN apk add --no-cache ca-certificates tzdata curl
 
 WORKDIR /app
 

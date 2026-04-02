@@ -8,6 +8,14 @@ DOCKER_COMPOSE ?= docker compose
 test-setup: stop
 	$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up --build -d
 
+test-ci: test-setup
+	docker build -f tests/Dockerfile -t go-microservice-test-ci .
+	docker run --rm \
+	  --network go-microservice-test \
+	  --env SERVICE_ENDPOINT_URL=http://service:8080/api/v1/ \
+	  --env SERVICE_DB_HOST=db \
+	  --name test-ci go-microservice-test-ci test
+
 test:
 	go test ./tests/... -v
 

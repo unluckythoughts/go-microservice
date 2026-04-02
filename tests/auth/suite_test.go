@@ -1,6 +1,8 @@
 package auth_test
 
 import (
+	"os"
+
 	"github.com/stretchr/testify/suite"
 	"github.com/unluckythoughts/go-microservice/v2/examples/microservice/client"
 	"github.com/unluckythoughts/go-microservice/v2/tools/auth"
@@ -18,8 +20,13 @@ type Suite struct {
 }
 
 func initializeTestDB(l *zap.Logger) *gorm.DB {
+	host := "localhost"
+	if os.Getenv("SERVICE_DB_HOST") != "" {
+		host = os.Getenv("SERVICE_DB_HOST")
+	}
+	
 	return psql.New(psql.Options{
-		Host:     "localhost",
+		Host:     host,
 		Port:     5432,
 		User:     "test",
 		Password: "test",
@@ -30,7 +37,12 @@ func initializeTestDB(l *zap.Logger) *gorm.DB {
 }
 
 func (s *Suite) SetupSuite() {
-	s.client = client.NewClient("http://localhost:8080/api/v1/")
+	baseURL := os.Getenv("SERVICE_ENDPOINT_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost:8080/api/v1"
+	}
+
+	s.client = client.NewClient(baseURL)
 	// Initialize the database connection here if needed
 	l := logger.New(logger.Options{
 		LogLevel: zap.ErrorLevel.String(),
