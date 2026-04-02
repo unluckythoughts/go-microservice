@@ -96,7 +96,7 @@ func setCORSHeaders(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-CSRF-Token")
 	w.Header().Set("Access-Control-Max-Age", "86400")
 }
 

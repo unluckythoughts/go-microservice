@@ -33,6 +33,15 @@ func (s *Service) getAuthResponse(ctx web.Context, user *User) (LoginResponse, e
 	}
 
 	resp.Token = strToken
+
+	// Generate a CSRF token for this session so the client can include it
+	// in the X-CSRF-Token header on subsequent state-changing requests.
+	csrfToken, err := web.GenerateCSRFToken(ctx)
+	if err != nil {
+		return resp, fmt.Errorf("failed to generate CSRF token: %w", err)
+	}
+	resp.CSRFToken = csrfToken
+
 	return resp, nil
 }
 
@@ -81,25 +90,37 @@ func getUserDataFromAuthHeader(headerValue string, secret string) (uint, error) 
 	return uint(intUserID), nil
 }
 func (s *Service) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
-	userID, err := getUserDataFromAuthHeader(r.GetHeader("Authorization"), s.jwtKey)
-	if err != nil {
-		return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: %w", err))
-	}
-
-	// If the user ID is not found in the header, check the session
-	if userID == 0 {
-		strUserID, err := r.GetContext().GetSessionValue("user_id")
+	authHeader := r.GetHeader("Authorization")
+	if authHeader != "" {
+		userID, err := getUserDataFromAuthHeader(authHeader, s.jwtKey)
 		if err != nil {
-			return nil, web.NewError(http.StatusUnauthorized, errors.New("unauthorized: Please log in to access this link"))
+			return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: %w", err))
 		}
+		user, err := s.GetUserByID(userID)
+		if err != nil {
+			return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: Please log in to access this link; %w", err))
+		}
+		return user, nil
+	}
 
-		userID, ok := strUserID.(uint)
-		if !ok || userID <= 0 {
-			return nil, web.NewError(http.StatusUnauthorized, errors.New("unauthorized: Please log in to access this link"))
+	// Session-based auth: validate CSRF on state-changing requests before trusting the session.
+	switch r.GetMethod() {
+	case "POST", "PUT", "PATCH", "DELETE":
+		if err := web.ValidateCSRFToken(r); err != nil {
+			return nil, err
 		}
 	}
 
-	// Check if the user exists in the database
+	strUserID, err := r.GetContext().GetSessionValue("user_id")
+	if err != nil {
+		return nil, web.NewError(http.StatusUnauthorized, errors.New("unauthorized: Please log in to access this link"))
+	}
+
+	userID, ok := strUserID.(uint)
+	if !ok || userID <= 0 {
+		return nil, web.NewError(http.StatusUnauthorized, errors.New("unauthorized: Please log in to access this link"))
+	}
+
 	user, err := s.GetUserByID(userID)
 	if err != nil {
 		return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: Please log in to access this link; %w", err))

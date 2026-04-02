@@ -40,7 +40,8 @@ func (Verify) TableName() string {
 }
 
 type LoginResponse struct {
-	Token string `json:"token"`
+	Token     string `json:"token"`
+	CSRFToken string `json:"csrf_token"`
 }
 
 type Credentials struct {
