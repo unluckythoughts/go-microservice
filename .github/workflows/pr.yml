@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Run tests with race detection
-        run: go test -race ./...
+        run: make test
       - name: Check coverage (30% minimum)
         run: |
           go test -coverprofile=coverage.out ./...
