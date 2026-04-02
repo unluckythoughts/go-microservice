@@ -1,7 +1,6 @@
 package web
 
 import (
-	"encoding/base64"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -77,7 +76,8 @@ func NewSessionStore(opts SessionOptions) SessionStore {
 			panic(err)
 		}
 		secretKey = []byte(strKey)
-		opts.Logger.Info("Generated random session secret key", zap.String("key", base64.StdEncoding.EncodeToString(secretKey)))
+		opts.Logger.Info("Generated random session secret key")
+		opts.Logger.Debug("Session secret initialized", zap.Int("length", len(secretKey)))
 	}
 
 	if opts.Name != "" {

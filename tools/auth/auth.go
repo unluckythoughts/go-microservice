@@ -74,7 +74,8 @@ func getOptions(override Options) Options {
 		if err != nil {
 			panic(err)
 		}
-		opts.Logger.Info("Generated random JWT key for auth service", zap.String("key", opts.JwtKey))
+		opts.Logger.Info("Generated random JWT key for auth service")
+		opts.Logger.Debug("JWT key loaded", zap.Int("length", len(opts.JwtKey)))
 	}
 	if override.TokenValidInHours > 0 {
 		opts.TokenValidInHours = override.TokenValidInHours
