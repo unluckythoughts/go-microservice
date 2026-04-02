@@ -248,3 +248,16 @@ func (c *client) DeleteResponse(url string, body any, resp any, reqHeaders ...ht
 
 	return c.Send(http.MethodDelete, url, reqBody, resp, reqHeaders...)
 }
+
+func GetResponseData[T any](status int, resp HTTPResponse) (T, error) {
+	var result T
+	if err := HandleResponse(status, nil, resp); err != nil {
+		return result, err
+	}
+
+	if err := MarshalData(resp.Data, &result); err != nil {
+		return result, err
+	}
+
+	return result, nil
+}

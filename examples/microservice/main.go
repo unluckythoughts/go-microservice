@@ -18,8 +18,8 @@ var migrations embed.FS
 
 func exampleMiddleware(r web.MiddlewareRequest) error {
 	r.GetContext().Logger().Info("test log from middleware")
-	_ = r.SetContextValue("example-key", "example-value")
-	return nil
+
+	return r.SetContextValue("example-key", "example-value")
 }
 
 func exampleHandler(r web.Request) (any, error) {
@@ -27,7 +27,7 @@ func exampleHandler(r web.Request) (any, error) {
 	r.GetContext().Logger().Infof("test log from handler with value: %s", val)
 	r.GetContext().Logger().Errorf("test log from handler with value: %s", val)
 
-	return "example-result", nil
+	return val, nil
 }
 
 const (
@@ -87,7 +87,7 @@ func main() {
 	})
 	
 	r := s.HttpRouter()
-	auth.RegisterAuthRoutes(r, "/auth", as, UserRole)
-	r.GET("/example", exampleMiddleware, exampleHandler)
+	auth.RegisterAuthRoutes(r, "/api/v1/auth", as, UserRole)
+	r.GET("/api/v1/example", exampleMiddleware, exampleHandler)
 	s.Start()
 }
