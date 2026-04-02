@@ -34,7 +34,7 @@ func (s *ChangePasswordSuite) TearDownTest() {
 
 func (s *ChangePasswordSuite) TestChangePassword_Success() {
 	_, status, err := s.client.ChangePassword(auth.ChangePasswordRequest{
-		OldPassword: auth.Password("TestPass1!"),
+		OldPassword: auth.Password("TestPass12!"),
 		NewPassword: auth.Password("NewPassw0rd!"),
 	})
 	s.Assert().NoError(err)
@@ -52,7 +52,7 @@ func (s *ChangePasswordSuite) TestChangePassword_WrongOldPassword() {
 
 func (s *ChangePasswordSuite) TestChangePassword_WeakNewPassword() {
 	_, status, err := s.client.ChangePassword(auth.ChangePasswordRequest{
-		OldPassword: auth.Password("TestPass1!"),
+		OldPassword: auth.Password("TestPass12!"),
 		NewPassword: auth.Password("weak"),
 	})
 	s.Assert().NoError(err)
@@ -63,7 +63,7 @@ func (s *ChangePasswordSuite) TestChangePassword_Unauthenticated() {
 	s.client.ClearBearerToken()
 
 	_, status, err := s.client.ChangePassword(auth.ChangePasswordRequest{
-		OldPassword: auth.Password("TestPass1!"),
+		OldPassword: auth.Password("TestPass12!"),
 		NewPassword: auth.Password("NewPass1!"),
 	})
 	s.Assert().NoError(err)

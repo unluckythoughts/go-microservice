@@ -13,7 +13,7 @@ func uniqueCredentials() (email, username, password, name string) {
 	ts := time.Now().UnixNano()
 	username = fmt.Sprintf("test_user_%d", ts)
 	email = fmt.Sprintf("%s@example.com", username)
-	password = "TestPass1!"
+	password = "TestPass12!"
 	name = fmt.Sprintf("Test User_%d", ts)
 	return
 }
@@ -44,7 +44,7 @@ func (s *Suite) newUser(t *testing.T) (*auth.User, error) {
 	return s.getUser(t, email)
 }
 
-func (s *Suite) deleteUser(t *testing.T, userID uint) error{
+func (s *Suite) deleteUser(t *testing.T, userID uint) error {
 	t.Helper()
 
 	return s.as.HardDeleteUser(userID)
@@ -78,7 +78,7 @@ func (s *Suite) registerAndLogin(t *testing.T) (user *auth.User, token string, e
 		return nil, "", fmt.Errorf("user creation failed: %w", err)
 	}
 
-	token, err = s.loginUser(t, user.Email, "TestPass1!")
+	token, err = s.loginUser(t, user.Email, "TestPass12!")
 	if err != nil {
 		return nil, "", fmt.Errorf("login failed: %w", err)
 	}

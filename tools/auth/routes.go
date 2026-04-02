@@ -18,6 +18,8 @@ func RegisterAuthRoutes(r web.Router, prefix string, as *Service, userRole Role)
 		return fmt.Errorf("route prefix has to start with '/'")
 	}
 
+	prefix = strings.TrimRight(prefix, "/")
+
 	// Auth routes
 	r.POST(prefix+"/auth/login", as.LoginHandler)
 	r.POST(prefix+"/auth/register", as.GetRegisterHandlerForUserRole(userRole))

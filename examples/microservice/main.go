@@ -85,9 +85,9 @@ func main() {
 			AdminRole: "admin",
 		},
 	})
-	
+
 	r := s.HttpRouter()
-	auth.RegisterAuthRoutes(r, "/api/v1/", as, UserRole)
+	auth.RegisterAuthRoutes(r, "/api/v1", as, UserRole)
 	r.GET("/api/v1/example", exampleMiddleware, exampleHandler)
 	s.Start()
 }
