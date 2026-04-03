@@ -42,11 +42,7 @@ func (s *Service) invalidateToken(tokenString string) error {
 	}
 
 	key := fmt.Sprintf("%s%s", invalidTokenPrefix, tokenString)
-	if s.cache != nil {
-		return s.cache.SetEX(context.Background(), key, "1", ttl).Err()
-	}
-
-	return fmt.Errorf("no cache to invalidate token")
+	return s.cache.SetEX(context.Background(), key, "1", ttl).Err()
 }
 
 // isTokenInvalidated returns true if the token was explicitly invalidated (e.g. on logout).
