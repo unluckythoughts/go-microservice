@@ -7,12 +7,11 @@ import (
 	"github.com/unluckythoughts/go-microservice/v2/tools/bus"
 	"github.com/unluckythoughts/go-microservice/v2/tools/cache"
 	"github.com/unluckythoughts/go-microservice/v2/tools/context"
+	"github.com/unluckythoughts/go-microservice/v2/tools/db"
 	"github.com/unluckythoughts/go-microservice/v2/tools/logger"
-	"github.com/unluckythoughts/go-microservice/v2/tools/psql"
 	"github.com/unluckythoughts/go-microservice/v2/tools/ratelimiter"
 	"github.com/unluckythoughts/go-microservice/v2/tools/sessions"
 	"github.com/unluckythoughts/go-microservice/v2/tools/sockets"
-	"github.com/unluckythoughts/go-microservice/v2/tools/sqlite"
 	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 	"github.com/unluckythoughts/go-microservice/v2/tools/worker"
 	"github.com/unluckythoughts/go-microservice/v2/utils"
@@ -37,7 +36,6 @@ type (
 	Options struct {
 		Name            string `env:"SERVICE_NAME" envDefault:"true"`
 		EnableDB        bool   `env:"SERVICE_ENABLE_DB" envDefault:"true"`
-		DBType          string `env:"SERVICE_DB_TYPE" envDefault:"postgresql"`
 		EnableCache     bool   `env:"SERVICE_ENABLE_CACHE" envDefault:"false"`
 		EnableBus       bool   `env:"SERVICE_ENABLE_BUS" envDefault:"false"`
 		EnableRateLimit bool   `env:"SERVICE_ENABLE_RATE_LIMIT" envDefault:"false"`
@@ -87,20 +85,12 @@ func getSessionStore(l *zap.Logger) sessions.Store {
 	return sessions.NewStore(opts)
 }
 
-func getPsqlDB(l *zap.Logger) *gorm.DB {
-	opts := psql.Options{}
+func getDB(l *zap.Logger) *gorm.DB {
+	opts := db.Options{}
 	utils.ParseEnvironmentVars(&opts)
 	opts.Logger = l
 
-	return psql.New(opts)
-}
-
-func getSqliteDB(l *zap.Logger) *gorm.DB {
-	opts := sqlite.Options{}
-	utils.ParseEnvironmentVars(&opts)
-	opts.Logger = l
-
-	return sqlite.New(opts)
+	return db.New(opts)
 }
 
 func getCache(l *zap.Logger) *redis.Client {
@@ -138,19 +128,14 @@ func New(opts Options) IService {
 	s.text = alerts.NewTextClient(l.Named("text"))
 
 	if opts.EnableDB {
-		if opts.DBType == DBTypeSqlite {
-			db := getSqliteDB(l.Named("db"))
-			s.db = db
-		} else {
-			db := getPsqlDB(l.Named("db"))
-			s.db = db
-			// Recreate worker with DB for distributed locking
-			s.worker = getWorker(l.Named("worker"), db)
-		}
+		db := getDB(l.Named("db"))
+		s.db = db
+		// Recreate worker with DB for distributed locking
+		s.worker = getWorker(l.Named("worker"), db)
 	}
 
 	if opts.EnableBus {
-		b := getBus(l.Named("queue"))
+		b := getBus(l.Named("bus"))
 		s.bus = b
 	}
 
