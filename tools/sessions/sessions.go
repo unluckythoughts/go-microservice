@@ -38,7 +38,7 @@ type (
 		// Secure determines if the cookie should only be sent over HTTPS
 		Secure bool `env:"SESSION_SECURE" envDefault:"false"`
 		// HttpOnly determines if the cookie should only be accessible via HTTP(S)
-		HttpOnly bool `env:"SESSION_HTTP_ONLY" envDefault:"true"`
+		HttpOnly bool `env:"SESSION_HTTP_ONLY" envDefault:"false"`
 		// SameSite determines the SameSite cookie attribute
 		SameSite http.SameSite `env:"SESSION_SAME_SITE" envDefault:"1"`
 		// Logger is the logger for the session store

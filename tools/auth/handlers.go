@@ -14,6 +14,15 @@ import (
 // LogoutHandler handles user logout requests
 // example path: GET .../logout
 func (s *Service) LogoutHandler(r web.Request) (any, error) {
+	// Invalidate bearer token if present so it cannot be reused after logout
+	authHeader := r.GetHeader("Authorization")
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		if err := s.invalidateToken(token); err != nil {
+			r.GetContext().Sugar().Warnw("failed to add token to invalidation list", "error", err)
+		}
+	}
+
 	// Clear the session and invalidate the cookie
 	err := r.GetContext().ClearSession()
 	if err != nil {
