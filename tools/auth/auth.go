@@ -16,6 +16,8 @@ type Service struct {
 	l            *zap.Logger
 	ignoreRoutes []string
 	jwtKey       string
+	jwtIssuer    string
+	jwtAudience  string
 	tokenValid   time.Duration
 	// Roles are defined as a map where the key is Role and the value is the role name
 	// Higher value Roles have more privileges and can access all resources of lower value Roles
@@ -32,6 +34,12 @@ type Options struct {
 	// JwtKey is the secret key used to sign JWT tokens
 	// If empty, it will panic
 	JwtKey string `env:"AUTH_JWT_KEY"`
+	// JWTIssuer is the "iss" claim value in generated tokens
+	// Default is "microservice"
+	JWTIssuer string `env:"AUTH_JWT_ISSUER" envDefault:"microservice"`
+	// JWTAudience is the "aud" claim value in generated tokens
+	// Default is "api"
+	JWTAudience string `env:"AUTH_JWT_AUDIENCE" envDefault:"api"`
 	// TokenValidInHours is the duration for which the JWT token is valid
 	// Default is 4 hours
 	TokenValidInHours uint `env:"AUTH_TOKEN_VALID" envDefault:"4"`
@@ -77,6 +85,12 @@ func getOptions(override Options) Options {
 		opts.Logger.Info("Generated random JWT key for auth service")
 		opts.Logger.Debug("JWT key loaded", zap.Int("length", len(opts.JwtKey)))
 	}
+	if override.JWTIssuer != "" {
+		opts.JWTIssuer = override.JWTIssuer
+	}
+	if override.JWTAudience != "" {
+		opts.JWTAudience = override.JWTAudience
+	}
 	if override.TokenValidInHours > 0 {
 		opts.TokenValidInHours = override.TokenValidInHours
 	}
@@ -102,6 +116,8 @@ func New(override Options) *Service {
 		l:            opts.Logger,
 		ignoreRoutes: opts.IgnoreRoutes,
 		jwtKey:       opts.JwtKey,
+		jwtIssuer:    opts.JWTIssuer,
+		jwtAudience:  opts.JWTAudience,
 		tokenValid:   time.Duration(opts.TokenValidInHours) * time.Hour,
 	}
 

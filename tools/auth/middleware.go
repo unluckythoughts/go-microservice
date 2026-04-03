@@ -24,8 +24,8 @@ func (s *Service) getAuthResponse(ctx localcontext.Context, user *User) (LoginRe
 	// Generate a JWT token for the user
 	strToken, err := web.CreateJWT(s.jwtKey, jwt.MapClaims{
 		"sub": strconv.Itoa(int(user.ID)),
-		"iss": "table-app",
-		"aud": []string{user.Role.Value()},
+		"iss": s.jwtIssuer,
+		"aud": s.jwtAudience,
 		"iat": time.Now().Unix(),
 		"exp": time.Now().Add(s.tokenValid).Unix(),
 	})
@@ -55,13 +55,16 @@ func (s *Service) isRouteIgnored(path string) bool {
 	return false
 }
 
-func getUserDataFromAuthHeader(headerValue string, secret string) (uint, error) {
+func (s *Service) getUserDataFromAuthHeader(headerValue string) (uint, error) {
 	if headerValue == "" {
 		return 0, fmt.Errorf("authorization header is empty")
 	}
 
 	headerValue = strings.TrimPrefix(headerValue, "Bearer ")
-	token, err := web.ParseJWT(secret, headerValue)
+	token, err := web.ParseJWT(s.jwtKey, headerValue,
+		jwt.WithIssuer(s.jwtIssuer),
+		jwt.WithAudience(s.jwtAudience),
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -93,7 +96,7 @@ func getUserDataFromAuthHeader(headerValue string, secret string) (uint, error) 
 func (s *Service) getUserFromRequest(r web.MiddlewareRequest) (*User, error) {
 	authHeader := r.GetHeader("Authorization")
 	if authHeader != "" {
-		userID, err := getUserDataFromAuthHeader(authHeader, s.jwtKey)
+		userID, err := s.getUserDataFromAuthHeader(authHeader)
 		if err != nil {
 			return nil, web.NewError(http.StatusUnauthorized, fmt.Errorf("unauthorized: %w", err))
 		}
