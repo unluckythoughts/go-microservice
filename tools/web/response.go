@@ -126,6 +126,18 @@ func logResponse(req *request, statusCode int, respBody *bytes.Buffer, respErr e
 	req.ctx.Logger().With(fields...).Debug(msg)
 }
 
+// setDefaultResponseHeaders sets the default security headers for the response
+func setDefaultResponseHeaders(h http.Header) {
+	h.Set("Content-Type", "application/json")
+	h.Set("X-Content-Type-Options", "nosniff")
+	h.Set("X-Frame-Options", "DENY")
+	h.Set("X-XSS-Protection", "1; mode=block")
+	h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+	h.Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'")
+	h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+	h.Set("Permissions-Policy", "geolocation=(), microphone=()")
+}
+
 // sendResponse function to send response to http requests
 func sendResponse(resp *response, data interface{}, respErr error, statusCode int) {
 	base := HTTPResponse{
@@ -135,7 +147,7 @@ func sendResponse(resp *response, data interface{}, respErr error, statusCode in
 	}
 
 	webError := &httpError{}
-	resp.respWriter.Header().Set("Content-Type", "application/json")
+	setDefaultResponseHeaders(resp.respWriter.Header())
 	if respErr == nil {
 		statusCode = 200
 		if resp.request.GetMethod() == http.MethodPost {
