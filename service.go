@@ -54,11 +54,6 @@ type (
 	}
 )
 
-const (
-	DBTypePostgresql = "postgresql"
-	DBTypeSqlite     = "sqlite"
-)
-
 func getLogger() *zap.Logger {
 	opts := logger.Options{}
 	utils.ParseEnvironmentVars(&opts)

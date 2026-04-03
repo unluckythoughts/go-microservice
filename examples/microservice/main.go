@@ -9,6 +9,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/unluckythoughts/go-microservice/v2"
 	"github.com/unluckythoughts/go-microservice/v2/tools/auth"
+	"github.com/unluckythoughts/go-microservice/v2/tools/bus"
 	"github.com/unluckythoughts/go-microservice/v2/tools/web"
 	"gorm.io/gorm"
 )
@@ -28,6 +29,21 @@ func exampleHandler(r web.Request) (any, error) {
 	r.GetContext().Sugar().Errorf("test log from handler with value: %s", val)
 
 	return val, nil
+}
+
+func publishHandler(b bus.IBus) web.Handler {
+	return func(r web.Request) (any, error) {
+		err := b.Publish(bus.Message{
+			Type:        "com-example-event",
+			RoutingKeys: []string{"com.example.event"},
+			Body:        []byte("hello world"),
+		})
+		if err != nil {
+			return nil, errors.New("failed to publish message")
+		}
+
+		return "message published", nil
+	}
 }
 
 const (
@@ -67,7 +83,6 @@ func main() {
 	opts := microservice.Options{
 		Name:        "example",
 		EnableDB:    true,
-		DBType:      microservice.DBTypePostgresql,
 		EnableCache: true, // enables Redis cache
 		EnableBus:   true, // enables AWS SQS bus
 	}
@@ -89,5 +104,15 @@ func main() {
 	r := s.HttpRouter()
 	auth.RegisterAuthRoutes(r, "/api/v1", as, UserRole)
 	r.GET("/api/v1/example", exampleMiddleware, exampleHandler)
+
+	b := s.GetBus()
+
+	b.AddHandler("example", "com.example.*", func(m bus.Message) error {
+		s.GetLogger().Sugar().Infof("Received message: %s", string(m.Body))
+		return nil
+	})
+
+	r.GET("/api/v1/bus/publish", publishHandler(b))
+
 	s.Start()
 }
