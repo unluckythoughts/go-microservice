@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
 )
 
 type (
@@ -17,8 +18,10 @@ type (
 		Port           int    `env:"DB_PORT" envDefault:"5432"`
 		SSLMode        string `env:"DB_SSLMODE" envDefault:"disable"`
 		ConnectTimeout int    `env:"DB_CONNECT_TIMEOUT" envDefault:"10"`
-		DebugMode      bool   `env:"DB_DEBUG_MODE" envDefault:"true"`
+		DebugMode      bool   `env:"DB_DEBUG_MODE" envDefault:"false"`
 		Debug          bool   `env:"DB_DEBUG" envDefault:"false"`
+		LogSQL         bool   `env:"DB_LOG_SQL" envDefault:"false"`
+		LogLevel       int    `env:"DB_LOG_LEVEL" envDefault:"0"`
 		User           string `env:"DB_USER"`
 		Name           string `env:"DB_NAME"`
 		Password       string `env:"DB_PASSWORD"`
@@ -55,7 +58,11 @@ func New(opts Options) *gorm.DB {
 		l = l.WithOptions(zap.IncreaseLevel(zapcore.InfoLevel))
 	}
 
-	db.Logger = &dbLogger{l: l}
+	if opts.LogSQL {
+		db = db.Session(&gorm.Session{Logger: &dbLogger{l: l}})
+	} else {
+		db = db.Session(&gorm.Session{Logger: gormLogger.Default.LogMode(gormLogger.Silent)})
+	}
 	sanityCheck(db)
 	opts.Logger.Info("Connected to db")
 	return db
