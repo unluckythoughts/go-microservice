@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -39,6 +40,9 @@ func (dbl *dbLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 
 	sql, rows := fc()
 	sql = spacePattern.ReplaceAllString(sql, " ")
+	if strings.Contains(strings.ToLower(sql), "password") {
+		sql = "[REDACTED PASSWORD QUERY]"
+	}
 
 	dbl.l.With(
 		zap.String("type", "query"),
