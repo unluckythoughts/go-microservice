@@ -61,6 +61,12 @@ func (s *Service) getUserDataFromAuthHeader(headerValue string) (uint, error) {
 	}
 
 	headerValue = strings.TrimPrefix(headerValue, "Bearer ")
+
+	// Reject tokens that have been explicitly invalidated (e.g. logged out)
+	if s.isTokenInvalidated(headerValue) {
+		return 0, fmt.Errorf("token has been invalidated")
+	}
+
 	token, err := web.ParseJWT(s.jwtKey, headerValue,
 		jwt.WithIssuer(s.jwtIssuer),
 		jwt.WithAudience(s.jwtAudience),

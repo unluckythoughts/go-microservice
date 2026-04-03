@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/unluckythoughts/go-microservice/v2/utils"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -13,6 +14,7 @@ import (
 
 type Service struct {
 	db           *gorm.DB
+	cache        *redis.Client
 	l            *zap.Logger
 	ignoreRoutes []string
 	jwtKey       string
@@ -29,6 +31,9 @@ type Service struct {
 type Options struct {
 	// DB is the database connection, if nil, it will use the default database connection
 	DB *gorm.DB
+	// Cache is an optional Redis client used for token invalidation on logout.
+	// If nil, logout will only clear the session cookie (bearer tokens remain valid until expiry).
+	Cache *redis.Client
 	// Logger is the logger to use, if nil, it will use the default logger
 	Logger *zap.Logger
 	// JwtKey is the secret key used to sign JWT tokens
@@ -68,6 +73,9 @@ func getOptions(override Options) Options {
 
 	if override.DB != nil {
 		opts.DB = override.DB
+	}
+	if override.Cache != nil {
+		opts.Cache = override.Cache
 	}
 	if override.Logger != nil {
 		opts.Logger = override.Logger
@@ -113,6 +121,7 @@ func New(override Options) *Service {
 
 	s := &Service{
 		db:           opts.DB,
+		cache:        opts.Cache,
 		l:            opts.Logger,
 		ignoreRoutes: opts.IgnoreRoutes,
 		jwtKey:       opts.JwtKey,
