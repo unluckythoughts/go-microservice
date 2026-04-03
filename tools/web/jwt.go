@@ -9,13 +9,13 @@ func CreateJWT(secretKey string, claims jwt.Claims) (string, error) {
 	return token.SignedString([]byte(secretKey))
 }
 
-func ParseJWT(secretKey string, tokenString string) (*jwt.Token, error) {
+func ParseJWT(secretKey string, tokenString string, opts ...jwt.ParserOption) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}
 		return []byte(secretKey), nil
-	})
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
