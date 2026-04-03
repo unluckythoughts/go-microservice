@@ -20,10 +20,15 @@ func FilterDBUpdates(obj any, userUpdates *map[string]any, ignoreColumns ...stri
 		key := t.Field(i)   // Get information about the field (e.g., name, type)
 		value := v.Field(i) // Get the value of the field
 
+		shouldIgnore := false
 		for _, keyName := range append(ignoreColumns, "id", "created_at", "updated_at") {
 			if key.Name == keyName {
-				continue // Skip this field if it's in the ignore list
+				shouldIgnore = true
+				break
 			}
+		}
+		if shouldIgnore {
+			continue
 		}
 
 		if value.IsValid() && !value.IsZero() {
