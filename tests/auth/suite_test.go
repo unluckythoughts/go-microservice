@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/unluckythoughts/go-microservice/v2/examples/microservice/client"
 	"github.com/unluckythoughts/go-microservice/v2/tools/auth"
+	"github.com/unluckythoughts/go-microservice/v2/tools/db"
 	"github.com/unluckythoughts/go-microservice/v2/tools/logger"
-	"github.com/unluckythoughts/go-microservice/v2/tools/psql"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -24,8 +24,8 @@ func initializeTestDB(l *zap.Logger) *gorm.DB {
 	if os.Getenv("SERVICE_DB_HOST") != "" {
 		host = os.Getenv("SERVICE_DB_HOST")
 	}
-	
-	return psql.New(psql.Options{
+
+	return db.New(db.Options{
 		Host:     host,
 		Port:     5432,
 		User:     "test",
