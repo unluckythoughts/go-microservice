@@ -11,9 +11,16 @@ import (
 	"go.uber.org/zap"
 )
 
+type Type uint
+
+const (
+	Redis Type = 1
+)
+
 type (
 	Options struct {
 		Logger     *zap.Logger
+		Type       Type   `env:"CACHE_TYPE" envDefault:"1"`
 		Host       string `env:"CACHE_HOST" envDefault:"localhost"`
 		Port       int    `env:"CACHE_PORT" envDefault:"6379"`
 		Password   string `env:"CACHE_PASSWORD" envDefault:""`
@@ -38,6 +45,10 @@ func sanityCheck(r *redis.Client) {
 }
 
 func New(opts Options) *redis.Client {
+	if opts.Type == 0 {
+		opts.Type = Redis
+	}
+
 	config := &redis.Options{
 		Addr:     opts.Host + ":" + strconv.Itoa(opts.Port),
 		Password: opts.Password,
