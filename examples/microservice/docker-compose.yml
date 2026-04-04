@@ -18,10 +18,8 @@ services:
       - DB_NAME=test
       - CACHE_HOST=cache
       - CACHE_PORT=6379
-      - BUS_HOST=bus
-      - BUS_PORT=5672
-      - BUS_USER=guest
-      - BUS_PASSWORD=guest
+      - BUS_HOST=kafka
+      - BUS_PORT=9092
     ports:
       - "8080:8080"
     healthcheck:
@@ -37,6 +35,8 @@ services:
       cache:
         condition: service_healthy
       bus:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   db:
@@ -81,10 +81,32 @@ services:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
       interval: 5s
       timeout: 3s
       retries: 10
+  kafka:
+    image: "apache/kafka:4.1.2"
+    hostname: "kafka"
+    container_name: "kafka"
+    networks:
+      - go-microservice-test
+    environment:
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
 networks:
   go-microservice-test:

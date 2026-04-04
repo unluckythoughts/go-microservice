@@ -5,6 +5,7 @@ go 1.26.1
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/caarlos0/env v3.5.0+incompatible
+	github.com/confluentinc/confluent-kafka-go/v2 v2.14.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gobwas/ws v1.4.0
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -14,6 +15,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.11.1
+	github.com/unluckythoughts/go-microservice/v2/examples/microservice v0.0.0
 	github.com/wagslane/go-rabbitmq v0.15.0
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.48.0
@@ -38,6 +40,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/mattn/go-sqlite3 v1.14.34 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
@@ -48,7 +51,5 @@ require (
 	golang.org/x/text v0.34.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-require github.com/unluckythoughts/go-microservice/v2/examples/microservice v0.0.0
 
 replace github.com/unluckythoughts/go-microservice/v2/examples/microservice => ./examples/microservice

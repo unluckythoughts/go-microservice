@@ -107,7 +107,7 @@ func main() {
 
 	b := s.GetBus()
 
-	b.AddHandler("example", "com.example.*", func(m bus.Message) error {
+	b.AddHandler("com.example.*", func(m bus.Message) error {
 		s.GetLogger().Sugar().Infof("Received message: %s", string(m.Body))
 		return nil
 	})

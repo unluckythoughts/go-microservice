@@ -22,7 +22,7 @@ RUN go mod download
 # Copy source and build
 COPY examples/microservice/migrations ./migrations/
 COPY examples/microservice/main.go .
-RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /app/server .
+RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -ldflags="-s -w" -o /app/server .
 
 # Runtime stage
 FROM alpine:3.21
