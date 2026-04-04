@@ -69,6 +69,9 @@ func newSQLite(opts Options) *gorm.DB {
 
 func New(opts Options) (db *gorm.DB) {
 	l := opts.Logger
+	if opts.Type == 0 {
+		opts.Type = Postgres
+	}
 	switch opts.Type {
 	case Postgres:
 		db = newPostgres(opts)
