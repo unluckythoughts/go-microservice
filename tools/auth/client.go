@@ -7,8 +7,8 @@ import (
 )
 
 // extractData unmarshals the Data field of an HTTPResponse into T.
-// It propagates network/decoding errors but does NOT treat HTTP 4xx/5xx as Go
-// errors — callers should inspect the returned status code instead.
+// It propagates network/decoding errors and HTTP 4xx/5xx errors returned by
+// the underlying web.Client.
 func extractData[T any](base web.HTTPResponse, status int, err error) (T, int, error) {
 	var zero T
 	if err != nil {

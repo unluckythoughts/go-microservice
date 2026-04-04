@@ -53,7 +53,7 @@ func (s *LoginSuite) TestLogin_InvalidPassword() {
 		Password: auth.Password("WrongPass1!"),
 	})
 
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "login with wrong password must be rejected")
 }
 
@@ -63,6 +63,6 @@ func (s *LoginSuite) TestLogin_UnknownEmail() {
 		Password: auth.Password("TestPass1!"),
 	})
 
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status)
 }

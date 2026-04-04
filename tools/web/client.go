@@ -199,6 +199,10 @@ func (c *client) Send(
 		}
 	}
 
+	if httpResp.StatusCode >= 400 {
+		return httpResp.StatusCode, fmt.Errorf("request failed: %d %s", httpResp.StatusCode, http.StatusText(httpResp.StatusCode))
+	}
+
 	return httpResp.StatusCode, nil
 }
 

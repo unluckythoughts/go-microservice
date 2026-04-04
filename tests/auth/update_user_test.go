@@ -46,7 +46,7 @@ func (s *UpdateUserSuite) TestUpdateUser_Unauthenticated() {
 	_, status, err := s.client.UpdateUser(auth.UpdateUserRequest{
 		Name: "Updated Name",
 	})
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "unauthenticated request must be rejected")
 }
 
@@ -54,6 +54,6 @@ func (s *UpdateUserSuite) TestUpdateUser_MissingName() {
 	_, status, err := s.client.UpdateUser(auth.UpdateUserRequest{
 		Name: "",
 	})
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().Equal(http.StatusBadRequest, status, "missing name must return 400")
 }

@@ -44,7 +44,7 @@ func (s *VerifyTokenSuite) TestVerifyToken_Success() {
 
 func (s *VerifyTokenSuite) TestVerifyToken_InvalidToken() {
 	_, status, err := s.client.VerifyToken(s.user.Email, "invalid-token")
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "invalid token must be rejected")
 }
 
@@ -68,6 +68,6 @@ func (s *VerifyTokenSuite) TestVerifyToken_WrongTarget() {
 	s.Require().NoError(err)
 
 	_, status, err := s.client.VerifyToken("wrong@example.com", verifyToken)
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "token for a different target must be rejected")
 }

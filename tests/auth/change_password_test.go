@@ -46,7 +46,7 @@ func (s *ChangePasswordSuite) TestChangePassword_WrongOldPassword() {
 		OldPassword: auth.Password("WrongPass1!"),
 		NewPassword: auth.Password("NewPass1!"),
 	})
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "wrong old password must be rejected")
 }
 
@@ -55,7 +55,7 @@ func (s *ChangePasswordSuite) TestChangePassword_WeakNewPassword() {
 		OldPassword: auth.Password("TestPass12!"),
 		NewPassword: auth.Password("weak"),
 	})
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().Equal(http.StatusBadRequest, status, "weak new password must return 400")
 }
 
@@ -66,6 +66,6 @@ func (s *ChangePasswordSuite) TestChangePassword_Unauthenticated() {
 		OldPassword: auth.Password("TestPass12!"),
 		NewPassword: auth.Password("NewPass1!"),
 	})
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "unauthenticated request must be rejected")
 }

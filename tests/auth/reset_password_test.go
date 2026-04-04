@@ -42,12 +42,12 @@ func (s *ResetPasswordSuite) TestResetPassword_Unauthenticated() {
 	s.client.ClearBearerToken()
 
 	_, status, err := s.client.ResetPassword(s.user.Email, "email")
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "unauthenticated request must be rejected")
 }
 
 func (s *ResetPasswordSuite) TestResetPassword_UnknownTarget() {
 	_, status, err := s.client.ResetPassword("nobody@nowhere.example.com", "email")
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "reset for unknown target must be rejected")
 }

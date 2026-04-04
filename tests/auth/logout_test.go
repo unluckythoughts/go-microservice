@@ -42,7 +42,7 @@ func (s *LogoutSuite) TestLogout_Unauthenticated() {
 	s.client.ClearBearerToken()
 
 	_, status, err := s.client.Logout()
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "logout without authentication must be rejected")
 }
 
@@ -54,6 +54,6 @@ func (s *LogoutSuite) TestLogout_ProtectedRouteRejectedAfterTokenCleared() {
 	s.client.ClearBearerToken()
 
 	_, status, err = s.client.GetUser()
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "accessing a protected route without a token must be rejected")
 }
