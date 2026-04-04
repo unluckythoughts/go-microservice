@@ -139,6 +139,10 @@ func (b *bus) getKafka(opts Options) (*kafka.Producer, *kafka.Consumer) {
 }
 
 func New(opts Options) IBus {
+	if opts.Type == 0 {
+		opts.Type = Kafka
+	}
+
 	b := &bus{
 		l:       opts.Logger.Sugar(),
 		appName: opts.AppName,
