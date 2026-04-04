@@ -51,7 +51,7 @@ func (s *UpdatePasswordSuite) TestUpdatePassword_InvalidToken() {
 		VerifyToken: "invalid-token",
 		NewPassword: auth.Password("NewPass1!"),
 	})
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "invalid verify token must be rejected")
 }
 
@@ -64,7 +64,7 @@ func (s *UpdatePasswordSuite) TestUpdatePassword_WeakNewPassword() {
 		VerifyToken: verifyToken,
 		NewPassword: auth.Password("weak"),
 	})
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "weak new password must be rejected")
 }
 
@@ -73,6 +73,6 @@ func (s *UpdatePasswordSuite) TestUpdatePassword_MissingToken() {
 		VerifyToken: "",
 		NewPassword: auth.Password("NewPass1!"),
 	})
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().Equal(http.StatusBadRequest, status, "missing verify token must return 400")
 }

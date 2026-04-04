@@ -46,7 +46,7 @@ func (s *RegisterSuite) TestRegister_DuplicateEmail() {
 		Name:     name,
 	})
 
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().NotEqual(http.StatusOK, status, "duplicate email registration must be rejected")
 }
 
@@ -59,7 +59,7 @@ func (s *RegisterSuite) TestRegister_MissingName() {
 		Name:     "",
 	})
 
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().Equal(http.StatusBadRequest, status, "registration without a name must return 400")
 }
 
@@ -72,7 +72,7 @@ func (s *RegisterSuite) TestRegister_InvalidPassword() {
 		Name:     name,
 	})
 
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().Equal(http.StatusBadRequest, status, "registration with a weak password must return 400")
 }
 
@@ -85,6 +85,6 @@ func (s *RegisterSuite) TestRegister_InvalidEmail() {
 		Name:     name,
 	})
 
-	s.Assert().NoError(err)
+	s.Assert().Error(err)
 	s.Assert().Equal(http.StatusBadRequest, status, "registration with an invalid email must return 400")
 }
