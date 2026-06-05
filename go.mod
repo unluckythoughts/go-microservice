@@ -3,6 +3,7 @@ module github.com/unluckythoughts/go-microservice/v2
 go 1.26.1
 
 require (
+	github.com/PhonePe/phonepe-pg-sdk-go v1.0.0
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/confluentinc/confluent-kafka-go/v2 v2.14.0

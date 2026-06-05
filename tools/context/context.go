@@ -16,8 +16,8 @@ const (
 
 type Context interface {
 	context.Context
-	Logger() *zap.Logger
-	Sugar() *zap.SugaredLogger
+	Logger(ls ...*zap.Logger) *zap.Logger
+	Sugar(ls ...*zap.Logger) *zap.SugaredLogger
 	SetLogger(logger *zap.Logger)
 	GetSession() *sessions.Session
 	SetSession(session *sessions.Session)
@@ -69,12 +69,20 @@ func (c *ctx) Cancel() {
 	}
 }
 
-func (c *ctx) Logger() *zap.Logger {
+func (c *ctx) Logger(ls ...*zap.Logger) *zap.Logger {
+	if c == nil || c.l == nil {
+		for _, l := range ls {
+			if l != nil {
+				return l
+			}
+		}
+		return zap.NewNop()
+	}
 	return c.l
 }
 
-func (c *ctx) Sugar() *zap.SugaredLogger {
-	return c.l.Sugar()
+func (c *ctx) Sugar(ls ...*zap.Logger) *zap.SugaredLogger {
+	return c.Logger(ls...).Sugar()
 }
 
 func (c *ctx) SetLogger(logger *zap.Logger) {

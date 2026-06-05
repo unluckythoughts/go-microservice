@@ -5,12 +5,17 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/unluckythoughts/go-microservice/v2/tools/context"
 	"github.com/unluckythoughts/go-microservice/v2/utils"
+	"go.uber.org/zap"
 )
 
 type Service struct {
+	l    *zap.Logger
 	from string
 	addr string
+	cc   []string
+	bcc  []string
 	auth smtp.Auth
 }
 
@@ -25,12 +30,17 @@ type Options struct {
 
 	// Username is the email address that will be used to authenticate with the SMTP server.
 	// It should be set in the environment variable MAIL_USERNAME.
-	//
 	// This email address will also be used as the "From" address when sending emails, so it should be a valid email address that you have access to.
 	Username string `env:"MAIL_USERNAME" envDefault:""`
 	// AppPassword is the application-specific password for the email account, required for authentication with the SMTP server.
 	// It should be set in the environment variable MAIL_APP_PASSWORD.
 	AppPassword string `env:"MAIL_APP_PASSWORD" envDefault:""`
+	// CC is a slice of email addresses that will receive a carbon copy (CC) of every email sent by the service.
+	// This field is optional and can be left empty if no CC recipients are needed.
+	CC []string `env:"MAIL_CC" envDefault:""`
+	// BCC is a slice of email addresses that will receive a blind carbon copy (BCC) of every email sent by the service.
+	// This field is optional and can be left empty if no BCC recipients are needed.
+	BCC []string `env:"MAIL_BCC" envDefault:""`
 }
 
 type Email struct {
@@ -41,6 +51,12 @@ type Email struct {
 	// Body is the content of the email. It is required and cannot be empty.
 	// The body can contain HTML content, and the mail service will set the appropriate MIME type for HTML emails.
 	Body string `valid:"required~email body is required"`
+	// CC is a slice of email addresses that will receive a carbon copy (CC) of the email.
+	// This field is optional and can be left empty if no CC recipients are needed.
+	CC []string `valid:"emails"`
+	// BCC is a slice of email addresses that will receive a blind carbon copy (BCC) of the email.
+	// This field is optional and can be left empty if no BCC recipients are needed.
+	BCC []string `valid:"emails"`
 }
 
 func defaultOptions(overrides *Options) *Options {
@@ -67,6 +83,12 @@ func defaultOptions(overrides *Options) *Options {
 	if overrides.AppPassword != "" {
 		opts.AppPassword = overrides.AppPassword
 	}
+	if len(overrides.CC) > 0 {
+		opts.CC = overrides.CC
+	}
+	if len(overrides.BCC) > 0 {
+		opts.BCC = overrides.BCC
+	}
 
 	return &opts
 }
@@ -86,11 +108,15 @@ func New(opts *Options) (*Service, error) {
 		from: opts.Username,
 		addr: addr,
 		auth: auth,
+		cc:   opts.CC,
+		bcc:  opts.BCC,
 	}, nil
 }
 
-func (s *Service) SendEmail(e *Email) error {
+func (s *Service) SendEmail(ctx context.Context, e *Email) error {
+	l := ctx.Logger()
 	if err := utils.ValidateStruct(e); err != nil {
+		l.Error("invalid email struct", zap.Error(err))
 		return err
 	}
 
@@ -104,6 +130,8 @@ func (s *Service) SendEmail(e *Email) error {
 	msg := []byte(strings.Join([]string{
 		"From: " + s.from,
 		"To: " + strings.Join(e.To, ", "),
+		"CC: " + strings.Join(append(s.cc, e.CC...), ", "),
+		"BCC: " + strings.Join(append(s.bcc, e.BCC...), ", "),
 		"Subject: " + e.Subject,
 		"MIME-Version: 1.0",
 		"Content-Type: text/html; charset=\"UTF-8\"",
@@ -111,5 +139,12 @@ func (s *Service) SendEmail(e *Email) error {
 		body,
 	}, "\r\n"))
 
-	return smtp.SendMail(s.addr, s.auth, s.from, e.To, msg)
+	err := smtp.SendMail(s.addr, s.auth, s.from, e.To, msg)
+	if err != nil {
+		l.Error("Failed to send email", zap.Error(err))
+		return err
+	}
+
+	l.Debug("Email sent successfully", zap.Any("email", e))
+	return nil
 }

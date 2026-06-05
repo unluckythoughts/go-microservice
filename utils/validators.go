@@ -45,18 +45,54 @@ func init() {
 
 		mobile, ok := i.(string)
 		if !ok {
+			// For type aliases like `type Mobile string`, use reflection to extract underlying string
+			v := reflect.ValueOf(i)
+			if v.Kind() != reflect.String {
+				return false
+			}
+			mobile = v.String()
+		}
+
+		return IsMobile(mobile)
+	}))
+
+	// Register custom validator for indian mobile
+	govalidator.CustomTypeTagMap.Set("indian_mobile", govalidator.CustomTypeValidator(func(i interface{}, o interface{}) bool {
+		if i == nil {
 			return false
 		}
 
-		// For type aliases like `type Mobile string`, use reflection to extract underlying string
-		v := reflect.ValueOf(i)
-
-		if v.Kind() == reflect.String {
-			password := v.String()
-			result := IsValidPassword(password)
-			return result
+		mobile, ok := i.(string)
+		if !ok {
+			// For type aliases like `type Mobile string`, use reflection to extract underlying string
+			v := reflect.ValueOf(i)
+			if v.Kind() != reflect.String {
+				return false
+			}
+			mobile = v.String()
 		}
-		return IsMobile(mobile)
+
+		return IsIndianMobile(mobile)
+	}))
+
+	// Register custom validator for indian mobiles
+	govalidator.CustomTypeTagMap.Set("indian_mobiles", govalidator.CustomTypeValidator(func(i interface{}, o interface{}) bool {
+		if i == nil {
+			return false
+		}
+
+		mobiles, ok := i.([]string)
+		if !ok {
+			return false
+		}
+
+		for _, mobile := range mobiles {
+			if !IsIndianMobile(mobile) {
+				return false
+			}
+		}
+
+		return true
 	}))
 
 	// Register custom validator for password
@@ -108,6 +144,30 @@ func IsMobile(mobile string) bool {
 	}
 
 	if len(mobile) < 10 || len(mobile) > 15 {
+		return false
+	}
+
+	return true
+}
+
+func IsIndianMobile(mobile string) bool {
+	if mobile == "" {
+		return false
+	}
+
+	// Remove any valid non-numeric characters from the mobile number
+	extrasPattern := regexp.MustCompile(`[.() \-+]`)
+	mobile = extrasPattern.ReplaceAllString(mobile, "")
+
+	if !govalidator.IsNumeric(mobile) {
+		return false
+	}
+
+	if len(mobile) != 10 && len(mobile) != 12 {
+		return false
+	}
+
+	if len(mobile) == 12 && !strings.HasPrefix(mobile, "91") {
 		return false
 	}
 
