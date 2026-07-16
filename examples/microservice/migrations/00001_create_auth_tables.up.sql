@@ -1,17 +1,19 @@
 CREATE TABLE IF NOT EXISTS users (
-    id              BIGSERIAL   PRIMARY KEY,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at      TIMESTAMPTZ,
-    name            TEXT        NOT NULL,
-    email           VARCHAR(255),
-    email_verified  BOOLEAN     NOT NULL DEFAULT FALSE,
-    mobile          VARCHAR(255),
-    mobile_verified BOOLEAN     NOT NULL DEFAULT FALSE,
-    password        TEXT        NOT NULL,
-    role            INTEGER     NOT NULL DEFAULT 1,
-    google_id       TEXT,
-    google_avatar   TEXT
+    id                      BIGSERIAL   PRIMARY KEY,
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at              TIMESTAMPTZ,
+    name                    TEXT        NOT NULL,
+    email                   VARCHAR(255),
+    email_verified          BOOLEAN     NOT NULL DEFAULT FALSE,
+    mobile                  VARCHAR(255),
+    mobile_verified         BOOLEAN     NOT NULL DEFAULT FALSE,
+    password                TEXT        NOT NULL,
+    role                    INTEGER     NOT NULL DEFAULT 1,
+    google_id               TEXT,
+    google_avatar            TEXT,
+    google_refresh_token     TEXT,
+    google_token_expires_at TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users (deleted_at);

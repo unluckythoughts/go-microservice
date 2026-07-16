@@ -73,17 +73,31 @@ func (s *Service) GoogleOAuthLogin(r web.Request) (any, error) {
 	if err != nil {
 		// User doesn't exist, create new user
 		user = &User{
-			Name:          userInfo.Name,
-			Email:         userInfo.Email,
-			GoogleID:      userInfo.ID,
-			GoogleAvatar:  userInfo.Picture,
-			Role:          getFirstKey(s.userRoles), // Default to user role
-			EmailVerified: true,
+			Name:                 userInfo.Name,
+			Email:                userInfo.Email,
+			GoogleID:             userInfo.ID,
+			GoogleAvatar:         userInfo.Picture,
+			GoogleRefreshToken:   token.RefreshToken,
+			GoogleTokenExpiresAt: token.Expiry,
+			Role:                 getFirstKey(s.userRoles), // Default to user role
+			EmailVerified:        true,
 		}
 
 		err = s.CreateUser(user)
 		if err != nil {
 			return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("failed to create user: %w", err))
+		}
+	} else {
+		// Update Google token fields in case the refresh token was rotated
+		updates := map[string]any{
+			"google_avatar":           userInfo.Picture,
+			"google_token_expires_at": token.Expiry,
+		}
+		if token.RefreshToken != "" {
+			updates["google_refresh_token"] = token.RefreshToken
+		}
+		if err := s.db.Model(&User{}).Where("id = ?", user.ID).Updates(updates).Error; err != nil {
+			return nil, web.NewError(http.StatusInternalServerError, fmt.Errorf("failed to update google token: %w", err))
 		}
 	}
 

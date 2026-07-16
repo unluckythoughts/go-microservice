@@ -17,8 +17,10 @@ type User struct {
 	Password       Password `gorm:"column:password;not null" json:"-"`
 	Role           Role     `gorm:"column:role;type:int;not null;default:1" json:"role"`
 	// Google OAuth fields
-	GoogleID     string `gorm:"column:google_id" json:"-"`
-	GoogleAvatar string `gorm:"column:google_avatar" json:"google_avatar,omitempty"`
+	GoogleID             string    `gorm:"column:google_id" json:"-"`
+	GoogleAvatar         string    `gorm:"column:google_avatar" json:"google_avatar,omitempty"`
+	GoogleRefreshToken   string    `gorm:"column:google_refresh_token" json:"-"`
+	GoogleTokenExpiresAt time.Time `gorm:"column:google_token_expires_at" json:"-"`
 }
 
 func (User) TableName() string {
